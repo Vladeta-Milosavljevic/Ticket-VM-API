@@ -21,9 +21,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/comments', [TicketController::class, 'storeComment'])->name('tickets.comments.store');
     });
 
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     // Users routes
     Route::apiResource('users', UserController::class);
-
     // Additional user-specific routes
     Route::prefix('users/{user}')->group(function () {
         Route::get('/tickets', [UserController::class, 'tickets'])->name('users.tickets');
