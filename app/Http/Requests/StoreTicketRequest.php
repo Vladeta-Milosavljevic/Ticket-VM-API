@@ -21,13 +21,16 @@ class StoreTicketRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'urgency' => ['required', 'in:low,medium,high,critical'],
             'deadline' => ['required', 'date', 'after:now'],
             'category_id' => ['nullable', 'exists:categories,id'],
-            'manager_id' => ['required', 'exists:users,id'],
+            // routes are protected, but in theory the user could still be null
+            'manager_id' => [$user?->isAdmin() || $user->isManager() ? 'nullable' : 'required', 'exists:users,id'],
             'agent_id' => ['nullable', 'exists:users,id'],
         ];
     }
