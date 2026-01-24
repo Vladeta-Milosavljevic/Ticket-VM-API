@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -28,12 +29,29 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
+        $currentUser = $request->user();
         // Authorization: Only admins and managers can create users
-        if (! $request->user()->isAdmin() && ! $request->user()->isManager()) {
+        if (! $currentUser->isAdmin() && ! $currentUser->isManager()) {
+            // Log unauthorized user creation attempt
+            Log::warning('Unauthorized user creation attempt', [
+                'user_id' => $currentUser->id,
+                'user_email' => $currentUser->email,
+                'action' => 'create_user',
+            ]);
+
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $user = User::create($request->validated());
+
+        // Log user creation for audit trail
+        Log::info('User created', [
+            'created_by_user_id' => $currentUser->id,
+            'created_by_user_email' => $currentUser->email,
+            'new_user_id' => $user->id,
+            'new_user_email' => $user->email,
+            'new_user_role' => $user->role,
+        ]);
 
         return (new UserResource($user))
             ->response()
@@ -53,14 +71,38 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): UserResource|JsonResponse
     {
+        $currentUser = $request->user();
         // Authorization: Only admins and managers can update users
-        if (! $request->user()->isAdmin() && ! $request->user()->isManager()) {
+        if (! $currentUser->isAdmin() && ! $currentUser->isManager()) {
+            // Log unauthorized user update attempt
+            Log::warning('Unauthorized user update attempt', [
+                'user_id' => $currentUser->id,
+                'user_email' => $currentUser->email,
+                'target_user_id' => $user->id,
+                'target_user_email' => $user->email,
+                'action' => 'update_user',
+            ]);
+
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $oldRole = $user->role;
         $user->update($request->validated());
+        $freshUser = $user->fresh();
 
-        return new UserResource($user->fresh());
+        // Log role changes specifically (security-sensitive)
+        if ($oldRole !== $freshUser->role) {
+            Log::info('User role changed', [
+                'updated_by_user_id' => $currentUser->id,
+                'updated_by_user_email' => $currentUser->email,
+                'target_user_id' => $freshUser->id,
+                'target_user_email' => $freshUser->email,
+                'old_role' => $oldRole,
+                'new_role' => $freshUser->role,
+            ]);
+        }
+
+        return new UserResource($freshUser);
     }
 
     /**
@@ -68,10 +110,29 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user): JsonResponse
     {
+        $currentUser = $request->user();
         // Authorization: Only admins can delete users
-        if (! $request->user()->isAdmin()) {
+        if (! $currentUser->isAdmin()) {
+            // Log unauthorized user deletion attempt
+            Log::warning('Unauthorized user deletion attempt', [
+                'user_id' => $currentUser->id,
+                'user_email' => $currentUser->email,
+                'target_user_id' => $user->id,
+                'target_user_email' => $user->email,
+                'action' => 'delete_user',
+            ]);
+
             return response()->json(['message' => 'Unauthorized'], 403);
         }
+
+        // Log user deletion for audit trail
+        Log::info('User deleted', [
+            'deleted_by_user_id' => $currentUser->id,
+            'deleted_by_user_email' => $currentUser->email,
+            'deleted_user_id' => $user->id,
+            'deleted_user_email' => $user->email,
+            'deleted_user_role' => $user->role,
+        ]);
 
         $user->delete();
 
