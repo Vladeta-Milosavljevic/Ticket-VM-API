@@ -81,7 +81,7 @@ class AuthController extends Controller
         ]);
 
         // Logout and invalidate session
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         // Regenerate CSRF token after logout
         $request->session()->invalidate();
