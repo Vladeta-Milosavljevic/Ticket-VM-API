@@ -25,8 +25,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/comments', [TicketController::class, 'comments'])->name('tickets.comments');
         Route::post('/comments', [TicketController::class, 'storeComment'])->name('tickets.comments.store');
     });
-
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    // Logout requires session middleware because it uses $request->session()
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('web')->name('logout');
 
     // Users routes
     Route::apiResource('users', UserController::class);

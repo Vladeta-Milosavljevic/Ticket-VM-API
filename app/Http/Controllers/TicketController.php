@@ -84,7 +84,6 @@ class TicketController extends Controller
         if (! $request->user()->isAdmin() && ! $request->user()->isManager()) {
             unset($validated['agent_id']);
         }
-
         $ticket = Ticket::create($validated);
 
         // Log ticket creation for audit trail
@@ -99,7 +98,8 @@ class TicketController extends Controller
             'status' => $ticket->status,
         ]);
 
-        return (new TicketResource($ticket))->response()->setStatusCode(201);
+        // Load the relationships to prevent N+1 queries when returning the resource
+        return new TicketResource($ticket->load(['category', 'manager', 'agent']));
     }
 
     /**

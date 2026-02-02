@@ -19,7 +19,6 @@ class User extends Authenticatable
      *
      * @var 'admin'|'manager'|'agent'
      */
-    public ?string $role = null;
 
     /**
      * The attributes that are mass assignable.
