@@ -1,0 +1,316 @@
+###
+# TicketVM API - REST Client Collection
+#
+# This file contains all API endpoints for the TicketVM Laravel ticket management system.
+# Uses HTTP-only cookie authentication with Laravel Sanctum.
+#
+# Setup Instructions:
+# 1. Install REST Client extension in VS Code/Cursor
+# 2. Update the @baseUrl variable below to match your server URL
+# 3. Run requests in order: CSRF Cookie → Login → Other endpoints
+#
+# Note: REST Client automatically handles cookies. CSRF tokens are handled automatically
+# for state-changing requests (POST, PUT, DELETE) when cookies are present.
+###
+
+@baseUrl = http://localhost:8000
+@apiUrl = {{baseUrl}}/api
+@csrfUrl = {{baseUrl}}/sanctum/csrf-cookie
+
+# Test user credentials (from seeder)
+@adminEmail = admin@example.com
+@adminPassword = password
+@managerEmail = manager1@example.com
+@managerPassword = password
+@agentEmail = agent1@example.com
+@agentPassword = password
+
+###
+# ============================================
+# AUTHENTICATION
+# ============================================
+###
+
+### Get CSRF Cookie
+# This must be called before login to set the XSRF-TOKEN cookie.
+# REST Client will automatically extract and use this cookie for subsequent requests.
+GET {{csrfUrl}}
+Accept: application/json
+
+### Login
+# Login with email and password. Sets HTTP-only session cookie.
+# After successful login, all authenticated requests will use the session cookie.
+POST {{apiUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+}
+
+### Logout
+# Logout current user. Invalidates session cookie.
+POST {{apiUrl}}/logout
+Accept: application/json
+
+###
+# ============================================
+# TICKETS
+# ============================================
+###
+
+### List Tickets (Paginated)
+# Get paginated list of tickets (15 per page).
+# Query parameters: ?page=1
+GET {{apiUrl}}/tickets
+Accept: application/json
+
+### Get Ticket by ID
+# Get a specific ticket with all relationships loaded.
+GET {{apiUrl}}/tickets/1
+Accept: application/json
+
+### Create Ticket
+# Create a new ticket.
+# - Managers/admins can optionally set agent_id
+# - Non-managers must provide manager_id
+# Required fields: title, description, urgency, deadline, category_id
+# Optional fields: manager_id (for non-managers), agent_id (for managers/admins)
+POST {{apiUrl}}/tickets
+Content-Type: application/json
+Accept: application/json
+
+{
+    "title": "Fix login bug",
+    "description": "Users cannot login with special characters in password",
+    "urgency": "high",
+    "deadline": "2026-02-15",
+    "category_id": 1,
+    "manager_id": 2
+}
+
+### Update Ticket
+# Update a ticket. Only admins can update tickets.
+# All fields are optional - only provided fields will be updated.
+PUT {{apiUrl}}/tickets/1
+Content-Type: application/json
+Accept: application/json
+
+{
+    "title": "Updated ticket title",
+    "urgency": "critical",
+    "description": "Updated description"
+}
+
+### Delete Ticket
+# Delete a ticket. Only admins can delete tickets.
+DELETE {{apiUrl}}/tickets/1
+Accept: application/json
+
+### Assign Agent to Ticket
+# Assign an agent to a ticket.
+# Only ticket manager or admins can assign agents.
+POST {{apiUrl}}/tickets/1/assign
+Content-Type: application/json
+Accept: application/json
+
+{
+    "agent_id": 4
+}
+
+### Complete Ticket
+# Mark ticket as completed. Changes status to 'pending_review'.
+# Only assigned agent or admins can complete tickets.
+POST {{apiUrl}}/tickets/1/complete
+Accept: application/json
+
+### Approve Ticket
+# Approve completed ticket. Changes status to 'completed'.
+# Only ticket manager or admins can approve.
+POST {{apiUrl}}/tickets/1/approve
+Accept: application/json
+
+### Reject Ticket
+# Reject completed ticket. Changes status back to 'in_progress'.
+# Only ticket manager or admins can reject.
+# Required: rejection_reason
+POST {{apiUrl}}/tickets/1/reject
+Content-Type: application/json
+Accept: application/json
+
+{
+    "rejection_reason": "Needs more work"
+}
+
+### Get Ticket Comments
+# Get all comments for a ticket.
+# Only ticket manager, assigned agent, or admins can view comments.
+GET {{apiUrl}}/tickets/1/comments
+Accept: application/json
+
+### Add Comment to Ticket
+# Add a comment to a ticket.
+# Only ticket manager, assigned agent, or admins can add comments.
+# Required: body
+# Optional: is_internal (default: false)
+POST {{apiUrl}}/tickets/1/comments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "body": "This is a comment on the ticket",
+    "is_internal": false
+}
+
+###
+# ============================================
+# USERS
+# ============================================
+###
+
+### List Users (Paginated)
+# Get paginated list of users (15 per page).
+# Query parameters: ?page=1
+GET {{apiUrl}}/users
+Accept: application/json
+
+### Get User by ID
+# Get a specific user with all relationships loaded.
+GET {{apiUrl}}/users/1
+Accept: application/json
+
+### Create User
+# Create a new user. Only admins and managers can create users.
+# Required fields: name, email, password, role
+# Role must be one of: admin, manager, agent
+POST {{apiUrl}}/users
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123",
+    "role": "agent"
+}
+
+### Update User
+# Update a user. Only admins and managers can update users.
+# All fields are optional - only provided fields will be updated.
+PUT {{apiUrl}}/users/1
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "Updated Name",
+    "role": "manager"
+}
+
+### Delete User
+# Delete a user. Only admins can delete users.
+DELETE {{apiUrl}}/users/1
+Accept: application/json
+
+### Get User Tickets
+# Get all tickets for a specific user (paginated).
+# Query parameters: ?page=1
+GET {{apiUrl}}/users/1/tickets
+Accept: application/json
+
+###
+# ============================================
+# EXAMPLE WORKFLOWS
+# ============================================
+###
+
+### Example: Complete Ticket Workflow
+# 1. Get CSRF cookie (run first)
+GET {{csrfUrl}}
+Accept: application/json
+
+### 2. Login as agent
+POST {{apiUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "{{agentEmail}}",
+    "password": "{{agentPassword}}"
+}
+
+### 3. Get assigned tickets
+GET {{apiUrl}}/tickets
+Accept: application/json
+
+### 4. Complete a ticket
+POST {{apiUrl}}/tickets/1/complete
+Accept: application/json
+
+### 5. Add a comment explaining completion
+POST {{apiUrl}}/tickets/1/comments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "body": "Ticket completed successfully. All issues resolved.",
+    "is_internal": false
+}
+
+### Example: Manager Review Workflow
+# 1. Login as manager
+POST {{apiUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "{{managerEmail}}",
+    "password": "{{managerPassword}}"
+}
+
+### 2. Get tickets pending review
+GET {{apiUrl}}/tickets
+Accept: application/json
+
+### 3. Approve a completed ticket
+POST {{apiUrl}}/tickets/1/approve
+Accept: application/json
+
+### 4. Or reject with reason
+POST {{apiUrl}}/tickets/1/reject
+Content-Type: application/json
+Accept: application/json
+
+{
+    "rejection_reason": "Please add more documentation before closing."
+}
+
+###
+# ============================================
+# NOTES
+# ============================================
+#
+# Authentication:
+# - REST Client automatically handles HTTP-only cookies
+# - CSRF tokens are extracted from cookies automatically for POST/PUT/DELETE requests
+# - No need to manually set X-XSRF-TOKEN header (REST Client handles it)
+#
+# Test Data (from seeder):
+# - Admin: admin@example.com / password
+# - Managers: manager1@example.com, manager2@example.com, manager3@example.com / password
+# - Agents: agent1@example.com through agent6@example.com / password
+# - Categories: 7 categories (ID 1-7)
+# - Tickets: 50 tickets with various statuses
+# - Comments: 250 comments (5 per ticket)
+#
+# Common Status Values:
+# - pending, in_progress, pending_review, completed, rejected, cancelled
+#
+# Common Urgency Values:
+# - low, medium, high, critical
+#
+# Roles:
+# - admin: Full access
+# - manager: Can manage tickets and users (except admins)
+# - agent: Can work on assigned tickets
+###
