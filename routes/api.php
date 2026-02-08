@@ -5,12 +5,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// CSRF token endpoint for SPA (needed for cookie-based auth)
-Route::get('/csrf-cookie', function () {
-    return response()->json(['message' => 'CSRF cookie set']);
-})->middleware('web')->name('csrf-cookie');
-
-Route::post('/login', [AuthController::class, 'login'])->middleware('web')->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 Route::middleware('auth:sanctum')->group(function () {
     // Tickets routes
@@ -25,8 +20,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/comments', [TicketController::class, 'comments'])->name('tickets.comments');
         Route::post('/comments', [TicketController::class, 'storeComment'])->name('tickets.comments.store');
     });
-    // Logout requires session middleware because it uses $request->session()
-    Route::post('/logout', [AuthController::class, 'logout'])->middleware('web')->name('logout');
+
+    // Logout route - revokes the bearer token
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Users routes
     Route::apiResource('users', UserController::class);

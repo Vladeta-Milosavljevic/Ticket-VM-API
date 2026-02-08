@@ -16,12 +16,12 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     /**
-     * Authenticate a user using session-based authentication (HTTP-only cookies).
+     * Authenticate a user using bearer token authentication.
      *
      * Business Rules:
      * - Validates email and password
-     * - Creates session with HTTP-only cookie (JavaScript cannot access)
-     * - Returns user data (no token needed - cookie handles auth)
+     * - Creates a bearer token for API authentication
+     * - Returns user data and access token
      * - Logs successful and failed login attempts
      */
     public function login(LoginRequest $request): JsonResponse
@@ -29,7 +29,7 @@ class AuthController extends Controller
         $credentials = $request->validated();
 
         // Attempt authentication
-        if (! Auth::attempt($credentials, remember: true)) {
+        if (! Auth::attempt($credentials)) {
             // Log failed login attempt
             Log::warning('Failed login attempt', [
                 'email' => $credentials['email'],
@@ -42,10 +42,10 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Regenerate session to prevent session fixation attacks
-        $request->session()->regenerate();
-
         $user = Auth::user();
+
+        // Create bearer token for API authentication
+        $token = $user->createToken('api-token')->plainTextToken;
 
         // Log successful login
         Log::info('User logged in', [
@@ -57,35 +57,32 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login successful',
+            'token' => $token,
             'user' => new UserResource($user),
         ], 200);
     }
 
     /**
-     * Logout the current user (destroy session).
+     * Logout the current user (revoke bearer token).
      *
      * Business Rules:
      * - Requires authentication (via auth:sanctum middleware)
-     * - Destroys session and invalidates HTTP-only cookie
+     * - Revokes the current bearer token
      * - Logs logout event
      */
     public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        // Log logout before destroying session
+        // Log logout before revoking token
         Log::info('User logged out', [
             'user_id' => $user->id,
             'user_email' => $user->email,
             'ip_address' => $request->ip(),
         ]);
 
-        // Logout and invalidate session
-        Auth::guard('web')->logout();
-
-        // Regenerate CSRF token after logout
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Revoke the current access token
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logout successful',
