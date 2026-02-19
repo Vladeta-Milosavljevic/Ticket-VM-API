@@ -20,7 +20,31 @@ class Category extends Model
         'slug',
         'description',
         'color',
+        'is_archived',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_archived' => 'boolean',
+        ];
+    }
+
+    /**
+     * Scope a query to only include active (non-archived) categories.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Category>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<Category>
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_archived', false);
+    }
 
     public function tickets(): HasMany
     {

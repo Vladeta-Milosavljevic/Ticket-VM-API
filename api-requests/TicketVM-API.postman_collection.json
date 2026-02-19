@@ -99,6 +99,268 @@
 			"description": "Authentication endpoints for login and logout using bearer tokens"
 		},
 		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "List Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories"
+							],
+							"query": [
+								{
+									"key": "active_only",
+									"value": "1",
+									"description": "Only return active (non-archived) categories",
+									"disabled": true
+								},
+								{
+									"key": "archived",
+									"value": "1",
+									"description": "Only return archived categories",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all categories. Use ?active_only=1 for only active categories, or ?archived=1 for only archived categories."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Hardware\",\n    \"description\": \"Hardware-related issues\",\n    \"color\": \"#3B82F6\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories"
+							]
+						},
+						"description": "Create a new category. Admin only. Name must be unique."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Category ID"
+								}
+							]
+						},
+						"description": "Get a specific category by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Hardware (Updated)\",\n    \"description\": \"Updated description\",\n    \"color\": \"#10B981\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Category ID"
+								}
+							]
+						},
+						"description": "Update a category. Admin only. Name must be unique."
+					},
+					"response": []
+				},
+				{
+					"name": "Archive Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories/:id/archive",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								":id",
+								"archive"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Category ID"
+								}
+							]
+						},
+						"description": "Archive a category. Admin only. Archived categories remain visible on existing tickets but cannot be used for new tickets."
+					},
+					"response": []
+				},
+				{
+					"name": "Reactivate Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories/:id/reactivate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								":id",
+								"reactivate"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Category ID"
+								}
+							]
+						},
+						"description": "Reactivate an archived category. Admin only."
+					},
+					"response": []
+				}
+			],
+			"description": "Category management endpoints. Admin only for create, update, archive, reactivate."
+		},
+		{
 			"name": "Tickets",
 			"item": [
 				{

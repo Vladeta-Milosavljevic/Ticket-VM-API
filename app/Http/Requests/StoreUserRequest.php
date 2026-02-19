@@ -11,7 +11,7 @@ class StoreUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Authorization handled in controller
+        return $this->user()->can('create', \App\Models\User::class);
     }
 
     /**

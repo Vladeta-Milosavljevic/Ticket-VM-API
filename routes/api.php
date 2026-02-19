@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,14 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Categories routes
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::post('/categories/{category}/archive', [CategoryController::class, 'archive'])->name('categories.archive');
+    Route::post('/categories/{category}/reactivate', [CategoryController::class, 'reactivate'])->name('categories.reactivate');
+
     // Tickets routes
     Route::apiResource('tickets', TicketController::class);
 

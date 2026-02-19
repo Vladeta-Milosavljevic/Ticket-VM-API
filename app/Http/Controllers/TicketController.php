@@ -105,6 +105,7 @@ class TicketController extends Controller
     /**
      * Update the specified ticket.
      *
+     * Authorization: Admin, ticket manager, or assigned agent can update.
      * Uses fresh() to ensure we return the latest data after update,
      * including any database-level changes (triggers, defaults, etc.)
      */
@@ -137,19 +138,9 @@ class TicketController extends Controller
      */
     public function destroy(Request $request, Ticket $ticket): JsonResponse
     {
-        $user = $request->user();
-        if (! $user->isAdmin() && ! $user->isManager()) {
-            // Log unauthorized deletion attempt
-            Log::warning('Unauthorized ticket deletion attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'delete',
-            ]);
+        $this->authorize('delete', $ticket);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $user = $request->user();
 
         // Log ticket deletion for audit trail
         Log::info('Ticket deleted', [
@@ -175,20 +166,9 @@ class TicketController extends Controller
      */
     public function assign(Request $request, Ticket $ticket): TicketResource|JsonResponse
     {
-        $user = $request->user();
-        // Only ticket manager or admins can assign agents
-        if (! $user->isAdmin() && $ticket->manager_id !== $user->id) {
-            // Log unauthorized assignment attempt
-            Log::warning('Unauthorized ticket assignment attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'assign',
-            ]);
+        $this->authorize('assign', $ticket);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $user = $request->user();
         $validated = $request->validate([
             'agent_id' => ['required', 'exists:users,id'],
         ]);
@@ -224,20 +204,9 @@ class TicketController extends Controller
      */
     public function complete(Request $request, Ticket $ticket): TicketResource|JsonResponse
     {
-        $user = $request->user();
-        // Only assigned agent or admins can mark ticket as complete
-        if (! $user->isAdmin() && $ticket->agent_id !== $user->id) {
-            // Log unauthorized completion attempt
-            Log::warning('Unauthorized ticket completion attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'complete',
-            ]);
+        $this->authorize('complete', $ticket);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $user = $request->user();
         if (! $ticket->agent_id) {
             return response()->json(['message' => 'Ticket must have an assigned agent'], 400);
         }
@@ -274,20 +243,9 @@ class TicketController extends Controller
      */
     public function approve(Request $request, Ticket $ticket): TicketResource|JsonResponse
     {
-        $user = $request->user();
-        // Only ticket manager or admins can approve completion
-        if (! $user->isAdmin() && $ticket->manager_id !== $user->id) {
-            // Log unauthorized approval attempt
-            Log::warning('Unauthorized ticket approval attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'approve',
-            ]);
+        $this->authorize('approve', $ticket);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $user = $request->user();
         // Only pending review tickets can be approved
         if ($ticket->status !== 'pending_review') {
             return response()->json(['message' => 'Ticket must be pending review to be approved'], 400);
@@ -322,20 +280,9 @@ class TicketController extends Controller
      */
     public function reject(Request $request, Ticket $ticket): TicketResource|JsonResponse
     {
-        $user = $request->user();
-        // Only ticket manager or admins can reject completion
-        if (! $user->isAdmin() && $ticket->manager_id !== $user->id) {
-            // Log unauthorized rejection attempt
-            Log::warning('Unauthorized ticket rejection attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'reject',
-            ]);
+        $this->authorize('reject', $ticket);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $user = $request->user();
         // Only pending review tickets can be rejected
         if ($ticket->status !== 'pending_review') {
             return response()->json(['message' => 'Ticket must be pending review to be rejected'], 400);
@@ -377,21 +324,7 @@ class TicketController extends Controller
      */
     public function comments(Request $request, Ticket $ticket): AnonymousResourceCollection|JsonResponse
     {
-        $user = $request->user();
-        // Comments are private - only ticket participants and admins can view
-        $canViewComments = $user->isAdmin() || $ticket->manager_id === $user->id || $ticket->agent_id === $user->id;
-        if (! $canViewComments) {
-            // Log unauthorized comment access attempt
-            Log::warning('Unauthorized comment access attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'view_comments',
-            ]);
-
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('viewComments', $ticket);
 
         // Eager load user relationship to avoid N+1 queries
         $comments = $ticket->comments()->with('user')->latest()->paginate(15);
@@ -411,21 +344,9 @@ class TicketController extends Controller
      */
     public function storeComment(Request $request, Ticket $ticket): CommentResource|JsonResponse
     {
-        $user = $request->user();
-        // Only ticket participants and admins can add comments
-        $canStoreComments = $user->isAdmin() || $ticket->manager_id === $user->id || $ticket->agent_id === $user->id;
-        if (! $canStoreComments) {
-            // Log unauthorized comment creation attempt
-            Log::warning('Unauthorized comment creation attempt', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'ticket_id' => $ticket->id,
-                'ticket_title' => $ticket->title,
-                'action' => 'create_comment',
-            ]);
+        $this->authorize('createComment', $ticket);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $user = $request->user();
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:255'],
             'is_internal' => ['sometimes', 'boolean'],

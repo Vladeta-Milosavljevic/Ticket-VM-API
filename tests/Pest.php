@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -41,7 +44,19 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Authenticate a user for API requests using Sanctum bearer token.
+ * Use this instead of $this->actingAs() which uses session/cookie auth.
+ *
+ * @param  User|null  $user  User to authenticate. Creates one if null.
+ * @param  array<string>  $abilities  Token abilities. Default ['*'] for full access.
+ * @return User
+ */
+function authenticateAs(?User $user = null, array $abilities = ['*']): User
 {
-    // ..
+    $user ??= User::factory()->create();
+
+    Sanctum::actingAs($user, $abilities);
+
+    return $user;
 }

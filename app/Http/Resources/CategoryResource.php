@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property string $slug
  * @property string|null $description
  * @property string|null $color
+ * @property bool $is_archived
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  * @property \Illuminate\Database\Eloquent\Model $resource
@@ -30,6 +31,7 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'color' => $this->color,
+            'is_archived' => $this->is_archived,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];

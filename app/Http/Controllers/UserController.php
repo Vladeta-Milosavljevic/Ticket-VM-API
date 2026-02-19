@@ -26,22 +26,12 @@ class UserController extends Controller
 
     /**
      * Store a newly created user.
+     *
+     * Authorization: Only admins and managers can create users.
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
         $currentUser = $request->user();
-        // Authorization: Only admins and managers can create users
-        if (! $currentUser->isAdmin() && ! $currentUser->isManager()) {
-            // Log unauthorized user creation attempt
-            Log::warning('Unauthorized user creation attempt', [
-                'user_id' => $currentUser->id,
-                'user_email' => $currentUser->email,
-                'action' => 'create_user',
-            ]);
-
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $user = User::create($request->validated());
 
         // Log user creation for audit trail
@@ -68,24 +58,12 @@ class UserController extends Controller
 
     /**
      * Update the specified user.
+     *
+     * Authorization: Only admins and managers can update users.
      */
     public function update(UpdateUserRequest $request, User $user): UserResource|JsonResponse
     {
         $currentUser = $request->user();
-        // Authorization: Only admins and managers can update users
-        if (! $currentUser->isAdmin() && ! $currentUser->isManager()) {
-            // Log unauthorized user update attempt
-            Log::warning('Unauthorized user update attempt', [
-                'user_id' => $currentUser->id,
-                'user_email' => $currentUser->email,
-                'target_user_id' => $user->id,
-                'target_user_email' => $user->email,
-                'action' => 'update_user',
-            ]);
-
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $oldRole = $user->role;
         $user->update($request->validated());
         $freshUser = $user->fresh();
@@ -107,23 +85,14 @@ class UserController extends Controller
 
     /**
      * Remove the specified user.
+     *
+     * Authorization: Only admins can delete users.
      */
     public function destroy(Request $request, User $user): JsonResponse
     {
-        $currentUser = $request->user();
-        // Authorization: Only admins can delete users
-        if (! $currentUser->isAdmin()) {
-            // Log unauthorized user deletion attempt
-            Log::warning('Unauthorized user deletion attempt', [
-                'user_id' => $currentUser->id,
-                'user_email' => $currentUser->email,
-                'target_user_id' => $user->id,
-                'target_user_email' => $user->email,
-                'action' => 'delete_user',
-            ]);
+        $this->authorize('delete', $user);
 
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $currentUser = $request->user();
 
         // Log user deletion for audit trail
         Log::info('User deleted', [
@@ -141,9 +110,13 @@ class UserController extends Controller
 
     /**
      * Get tickets for a specific user.
+     *
+     * Authorization: Admins, managers, or the user themselves can view.
      */
     public function tickets(User $user): AnonymousResourceCollection
     {
+        $this->authorize('viewTickets', $user);
+
         $tickets = $user->tickets()
             ->with(['category', 'manager', 'agent'])
             ->latest()

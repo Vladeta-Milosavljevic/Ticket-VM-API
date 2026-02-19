@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTicketRequest extends FormRequest
 {
@@ -28,7 +29,7 @@ class StoreTicketRequest extends FormRequest
             'description' => ['required', 'string'],
             'urgency' => ['required', 'in:low,medium,high,critical'],
             'deadline' => ['required', 'date', 'after:now'],
-            'category_id' => ['nullable', 'exists:categories,id'],
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('is_archived', 0)],
             // routes are protected, but in theory the user could still be null
             'manager_id' => [$user?->isAdmin() || $user?->isManager() ? 'nullable' : 'required', 'exists:users,id'],
             'agent_id' => ['nullable', 'exists:users,id'],
@@ -51,7 +52,7 @@ class StoreTicketRequest extends FormRequest
             'deadline.required' => 'The deadline field is required.',
             'deadline.date' => 'The deadline must be a valid date.',
             'deadline.after' => 'The deadline must be a future date.',
-            'category_id.exists' => 'The selected category does not exist.',
+            'category_id.exists' => 'The selected category does not exist or is archived.',
             'manager_id.required' => 'The manager field is required.',
             'manager_id.exists' => 'The selected manager does not exist.',
             'agent_id.exists' => 'The selected agent does not exist.',
