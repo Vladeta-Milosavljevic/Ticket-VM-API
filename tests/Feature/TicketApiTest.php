@@ -37,6 +37,55 @@ test('authenticated user can list tickets', function () {
         ->assertJsonStructure(['data']);
 });
 
+test('tickets can be filtered by status', function () {
+    authenticateAs();
+    $openTicket = Ticket::factory()->create(['status' => 'open']);
+    $completedTicket = Ticket::factory()->create(['status' => 'completed']);
+
+    $response = $this->getJson('/api/tickets?status=open');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $openTicket->id);
+});
+
+test('tickets can be filtered by category_id', function () {
+    authenticateAs();
+    $category = Category::factory()->create(['is_archived' => false]);
+    $ticketInCategory = Ticket::factory()->create(['category_id' => $category->id]);
+    $otherTicket = Ticket::factory()->create();
+
+    $response = $this->getJson("/api/tickets?category_id={$category->id}");
+
+    $response->assertStatus(200)
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $ticketInCategory->id);
+});
+
+test('tickets can be filtered by search', function () {
+    authenticateAs();
+    $matchingTicket = Ticket::factory()->create(['title' => 'Unique Searchable Title']);
+    Ticket::factory()->create(['title' => 'Other Ticket']);
+
+    $response = $this->getJson('/api/tickets?search=Unique+Searchable');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingTicket->id);
+});
+
+test('tickets can be filtered by unassigned', function () {
+    authenticateAs();
+    $unassignedTicket = Ticket::factory()->create(['agent_id' => null]);
+    $assignedTicket = Ticket::factory()->assigned()->create();
+
+    $response = $this->getJson('/api/tickets?unassigned=1');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $unassignedTicket->id);
+});
+
 test('authenticated user can view a ticket', function () {
     authenticateAs();
     $ticket = Ticket::factory()->create();

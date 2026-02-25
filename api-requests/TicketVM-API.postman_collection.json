@@ -393,10 +393,82 @@
 									"key": "page",
 									"value": "1",
 									"description": "Page number for pagination"
+								},
+								{
+									"key": "category_id",
+									"value": "1",
+									"description": "Filter by category ID",
+									"disabled": true
+								},
+								{
+									"key": "manager_id",
+									"value": "1",
+									"description": "Filter by manager ID",
+									"disabled": true
+								},
+								{
+									"key": "agent_id",
+									"value": "1",
+									"description": "Filter by assigned agent ID",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "open",
+									"description": "Filter by status: open, in_progress, pending_review, completed, rejected, cancelled",
+									"disabled": true
+								},
+								{
+									"key": "urgency",
+									"value": "high",
+									"description": "Filter by urgency: low, medium, high, critical",
+									"disabled": true
+								},
+								{
+									"key": "unassigned",
+									"value": "1",
+									"description": "Only tickets without an assigned agent",
+									"disabled": true
+								},
+								{
+									"key": "overdue",
+									"value": "1",
+									"description": "Only overdue tickets (deadline passed, not completed/cancelled)",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search in title and description",
+									"disabled": true
+								},
+								{
+									"key": "deadline_from",
+									"value": "2026-01-01",
+									"description": "Tickets with deadline on or after this date (YYYY-MM-DD)",
+									"disabled": true
+								},
+								{
+									"key": "deadline_to",
+									"value": "2026-12-31",
+									"description": "Tickets with deadline on or before this date (YYYY-MM-DD)",
+									"disabled": true
+								},
+								{
+									"key": "sort",
+									"value": "created_at",
+									"description": "Sort by: created_at, deadline, urgency, status",
+									"disabled": true
+								},
+								{
+									"key": "order",
+									"value": "desc",
+									"description": "Sort order: asc, desc",
+									"disabled": true
 								}
 							]
 						},
-						"description": "Get a paginated list of all tickets. Returns 15 tickets per page. Includes category, manager, and agent relationships."
+						"description": "Get a paginated list of tickets. Returns 15 tickets per page. Includes category, manager, and agent relationships.\n\n**Filtering:** category_id, manager_id, agent_id, status, urgency, unassigned, overdue, search, deadline_from, deadline_to.\n\n**Sorting:** sort (created_at, deadline, urgency, status), order (asc, desc). Default: sort=created_at, order=desc."
 					},
 					"response": []
 				},

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -64,5 +65,42 @@ class Ticket extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Scope a query to apply filters from the index request.
+     *
+     * @param  Builder<Ticket>  $query
+     * @param  array<string, mixed>  $filters
+     * @return Builder<Ticket>
+     */
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        foreach ($filters as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            match ($key) {
+                'category_id' => $query->where('category_id', $value),
+                'manager_id' => $query->where('manager_id', $value),
+                'agent_id' => $query->where('agent_id', $value),
+                'status' => $query->where('status', $value),
+                'urgency' => $query->where('urgency', $value),
+                'unassigned' => $value ? $query->whereNull('agent_id') : $query,
+                'overdue' => $value ? $query->where('deadline', '<', now())
+                    ->whereNotIn('status', ['completed', 'cancelled']) : $query,
+                'search' => $query->where(function (Builder $q) use ($value) {
+                    $search = '%'.$value.'%';
+                    $q->where('title', 'like', $search)
+                        ->orWhere('description', 'like', $search);
+                }),
+                'deadline_from' => $query->whereDate('deadline', '>=', $value),
+                'deadline_to' => $query->whereDate('deadline', '<=', $value),
+                default => $query,
+            };
+        }
+
+        return $query;
     }
 }

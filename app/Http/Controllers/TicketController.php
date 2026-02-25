@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexTicketRequest;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Http\Resources\CommentResource;
@@ -33,12 +34,24 @@ class TicketController extends Controller
     /**
      * Display a paginated listing of tickets.
      *
+     * Supports filtering via query parameters: category_id, manager_id, agent_id,
+     * status, urgency, unassigned, overdue, search, deadline_from, deadline_to.
+     * Supports sorting via sort and order parameters.
+     *
      * Eager loads relationships to prevent N+1 queries:
      * - category, manager, agent
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexTicketRequest $request): AnonymousResourceCollection
     {
-        $tickets = Ticket::with(['category', 'manager', 'agent'])->latest()->paginate(15);
+        $validated = $request->validated();
+        $sort = $validated['sort'] ?? 'created_at';
+        $order = $validated['order'] ?? 'desc';
+
+        $tickets = Ticket::with(['category', 'manager', 'agent'])
+            ->filter($validated)
+            ->orderBy($sort, $order)
+            ->paginate(15)
+            ->withQueryString();
 
         return TicketResource::collection($tickets);
     }
