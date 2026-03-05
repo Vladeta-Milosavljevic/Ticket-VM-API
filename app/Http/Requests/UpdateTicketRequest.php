@@ -35,6 +35,13 @@ class UpdateTicketRequest extends FormRequest
             'completed_by_manager_at' => ['sometimes', 'nullable', 'date'],
             'rejected_at' => ['sometimes', 'nullable', 'date'],
             'rejection_reason' => ['required_if:rejected_at,!=,null', 'nullable', 'string'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => [
+                'file',
+                'mimes:jpeg,png,gif,pdf,doc,docx,txt',
+                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
+                'max:10240',
+            ],
         ];
     }
 

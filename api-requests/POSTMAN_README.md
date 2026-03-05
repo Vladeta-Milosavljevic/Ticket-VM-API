@@ -149,18 +149,7 @@ This revokes the token on the server. You'll need to login again to get a new to
 
 ### Create Ticket
 
-```json
-POST /api/tickets
-{
-    "title": "Fix login issue",
-    "description": "Users are unable to log in with their credentials",
-    "urgency": "high",
-    "deadline": "2026-02-15T10:00:00Z",
-    "category_id": null,
-    "manager_id": 1,
-    "agent_id": null
-}
-```
+Use **multipart/form-data** for Create Ticket (supports optional file attachments).
 
 **Field Requirements:**
 
@@ -171,19 +160,13 @@ POST /api/tickets
 -   `category_id` (optional): Integer, must exist in categories table
 -   `manager_id` (required for non-managers, optional for managers/admins): Integer, must exist in users table
 -   `agent_id` (optional, only admins/managers can set): Integer, must exist in users table
+-   `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
 
 ### Update Ticket
 
-```json
-PUT /api/tickets/1
-{
-    "title": "Updated ticket title",
-    "status": "in_progress",
-    "urgency": "medium"
-}
-```
+Use **multipart/form-data** for Update Ticket (supports optional file attachments).
 
-All fields are optional. Only include fields you want to update.
+All fields are optional. Only include fields you want to update. Optional `attachments`: max 5 files, 10MB each.
 
 **Status Values:**
 
@@ -228,15 +211,11 @@ POST /api/tickets/1/reject
 
 ### Create Comment
 
-```json
-POST /api/tickets/1/comments
-{
-    "body": "This is a comment on the ticket",
-    "is_internal": false
-}
-```
+Use **multipart/form-data** for Create Comment (supports optional file attachments).
 
 -   `body` (required): String, max 255 characters
+-   `is_internal` (optional): Boolean, defaults to false
+-   `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
 -   `is_internal` (optional): Boolean, defaults to `false`
 
 ### Create User
@@ -258,6 +237,20 @@ POST /api/users
 -   `agent` - Can work on assigned tickets
 
 **Authorization:** Only admins and managers can create users.
+
+### Delete Attachment
+
+```http
+DELETE /api/attachments/:id
+```
+
+**Authorization:** Only ticket manager, assigned agent, or admins can delete attachments. The file is removed from storage.
+
+### File Attachments
+
+-   **Create Ticket**, **Update Ticket**, and **Create Comment** accept optional `attachments` (multipart/form-data).
+-   Max 5 files per request, 10MB each. Allowed types: jpeg, png, gif, pdf, doc, docx, txt.
+-   The `url` field in attachment responses is a **temporary signed URL** (expires in 60 minutes). Use it immediately for download. There is no separate download route.
 
 ## 📦 Response Formats
 

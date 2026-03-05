@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUserRequest extends FormRequest
@@ -11,7 +12,7 @@ class StoreUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\User::class);
+        return $this->user()->can('create', User::class);
     }
 
     /**
@@ -25,7 +26,7 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'in:admin,manager,agent'],
+            'role' => ['required', 'in:agent'],
         ];
     }
 
@@ -45,7 +46,7 @@ class StoreUserRequest extends FormRequest
             'password.required' => 'The password field is required.',
             'password.min' => 'The password must be at least 8 characters.',
             'role.required' => 'The role field is required.',
-            'role.in' => 'The role must be one of: admin, manager, agent.',
+            'role.in' => 'The role must be one of: agent.',
         ];
     }
 }

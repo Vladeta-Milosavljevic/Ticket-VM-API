@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Attachment;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Ticket;
@@ -113,6 +114,15 @@ class DatabaseSeeder extends Seeder
         // Get all tickets for comments
         $tickets = Ticket::all();
 
+        // Add attachments to some tickets (first 10 tickets get 1-2 attachments each)
+        foreach ($tickets->take(10) as $ticket) {
+            $count = rand(1, 2);
+            Attachment::factory()
+                ->forTicket($ticket)
+                ->count($count)
+                ->create(['user_id' => $ticket->manager_id]);
+        }
+
         // Create 5 comments per ticket
         foreach ($tickets as $ticket) {
             // Mix of manager and agent comments
@@ -124,10 +134,18 @@ class DatabaseSeeder extends Seeder
                     $commenter = $ticket->manager;
                 }
 
-                Comment::factory()->create([
+                $comment = Comment::factory()->create([
                     'ticket_id' => $ticket->id,
                     'user_id' => $commenter->id,
                 ]);
+
+                // Add attachments to ~20% of comments
+                if (rand(1, 5) === 1) {
+                    Attachment::factory()
+                        ->forComment($comment)
+                        ->count(1)
+                        ->create(['user_id' => $commenter->id]);
+                }
             }
         }
 
@@ -136,5 +154,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Categories created: 7');
         $this->command->info('Tickets created: 50');
         $this->command->info('Comments created: 250 (5 per ticket)');
+        $this->command->info('Attachments created: demo attachments on tickets and comments');
     }
 }

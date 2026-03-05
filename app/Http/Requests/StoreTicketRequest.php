@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Ticket;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +13,7 @@ class StoreTicketRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Adjust based on your authorization logic
+        return $this->user()->can('create', Ticket::class); // Adjust based on your authorization logic
     }
 
     /**
@@ -30,9 +31,15 @@ class StoreTicketRequest extends FormRequest
             'urgency' => ['required', 'in:low,medium,high,critical'],
             'deadline' => ['required', 'date', 'after:now'],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('is_archived', 0)],
-            // routes are protected, but in theory the user could still be null
-            'manager_id' => [$user?->isAdmin() || $user?->isManager() ? 'nullable' : 'required', 'exists:users,id'],
-            'agent_id' => ['nullable', 'exists:users,id'],
+            'manager_id' => [$user?->isAdmin() || $user?->isManager() ? 'nullable' : 'required', Rule::exists('users', 'id')->where('role', ['manager', 'admin'])],
+            'agent_id' => ['nullable', Rule::exists('users', 'id')->where('role', 'agent')],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => [
+                'file',
+                'mimes:jpeg,png,gif,pdf,doc,docx,txt',
+                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
+                'max:10240',
+            ],
         ];
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TicketController;
@@ -32,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Logout route - revokes the bearer token
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Attachments routes
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
     // Users routes
     Route::apiResource('users', UserController::class);

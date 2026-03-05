@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -26,9 +27,9 @@ class UpdateUserRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $userId],
+            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,'.$userId],
             'password' => ['sometimes', 'string', 'min:8'],
-            'role' => ['sometimes', 'in:admin,manager,agent'],
+            'role' => ['sometimes', Rule::in($this->user()->isAdmin() ? ['admin', 'manager', 'agent'] : ['manager', 'agent'])],
         ];
     }
 
@@ -44,7 +45,7 @@ class UpdateUserRequest extends FormRequest
             'email.email' => 'The email must be a valid email address.',
             'email.unique' => 'The email has already been taken.',
             'password.min' => 'The password must be at least 8 characters.',
-            'role.in' => 'The role must be one of: admin, manager, agent.',
+            'role.in' => 'The role must be one of: admin, manager, agent. Only admins can update the role to admin.',
         ];
     }
 }

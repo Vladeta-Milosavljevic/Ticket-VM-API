@@ -46,6 +46,7 @@ class TicketResource extends JsonResource
             'category' => new CategoryResource($this->whenLoaded('category')),
             'comments_count' => $this->whenCounted('comments'),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
+            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'manager' => new UserResource($this->whenLoaded('manager')),
             'agent' => new UserResource($this->whenLoaded('agent')),
             'completed_by_agent_at' => $this->completed_by_agent_at?->format('Y-m-d H:i:s'),

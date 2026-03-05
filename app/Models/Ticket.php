@@ -7,10 +7,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Storage;
 
 class Ticket extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Ticket $ticket): void {
+            $ticket->comments->each->delete();
+            foreach ($ticket->attachments as $attachment) {
+                Storage::disk($attachment->disk)->delete($attachment->path);
+            }
+            $ticket->attachments()->delete();
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -65,6 +78,11 @@ class Ticket extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     /**

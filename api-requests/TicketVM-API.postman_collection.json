@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "ticketvm-api-collection",
 		"name": "TicketVM API",
-		"description": "Complete API collection for TicketVM ticket management system",
+		"description": "Complete API collection for TicketVM ticket management system. File attachments: Create/Update Ticket and Create Comment accept optional attachments (multipart/form-data). Attachment url in responses is a temporary signed URL (60 min) for direct download. Delete: DELETE /api/attachments/:id.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -478,11 +478,6 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
@@ -494,13 +489,55 @@
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"Fix login issue\",\n    \"description\": \"Users are unable to log in with their credentials\",\n    \"urgency\": \"high\",\n    \"deadline\": \"2026-02-15T10:00:00Z\",\n    \"category_id\": null,\n    \"manager_id\": 1,\n    \"agent_id\": null\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Fix login issue",
+									"type": "text",
+									"description": "Required"
+								},
+								{
+									"key": "description",
+									"value": "Users are unable to log in with their credentials",
+									"type": "text"
+								},
+								{
+									"key": "urgency",
+									"value": "high",
+									"type": "text",
+									"description": "low, medium, high, critical"
+								},
+								{
+									"key": "deadline",
+									"value": "2026-02-15T10:00:00Z",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "",
+									"type": "text",
+									"description": "Optional"
+								},
+								{
+									"key": "manager_id",
+									"value": "1",
+									"type": "text",
+									"description": "Required for non-managers"
+								},
+								{
+									"key": "agent_id",
+									"value": "",
+									"type": "text",
+									"description": "Optional, admin/manager only"
+								},
+								{
+									"key": "attachments",
+									"type": "file",
+									"src": [],
+									"description": "Optional. Max 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
 								}
-							}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/tickets",
@@ -512,7 +549,7 @@
 								"tickets"
 							]
 						},
-						"description": "Create a new ticket. Any authenticated user can create tickets. Managers/admins can optionally set agent_id during creation. Non-managers must specify manager_id."
+						"description": "Create a new ticket. Use multipart/form-data. Any authenticated user can create tickets. Managers/admins can optionally set agent_id during creation. Non-managers must specify manager_id. Optional attachments: max 5 files, 10MB each (jpeg, png, gif, pdf, doc, docx, txt)."
 					},
 					"response": []
 				},
@@ -560,11 +597,6 @@
 						"method": "PUT",
 						"header": [
 							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
@@ -576,13 +608,55 @@
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"Updated ticket title\",\n    \"description\": \"Updated description\",\n    \"urgency\": \"medium\",\n    \"deadline\": \"2026-02-20T10:00:00Z\",\n    \"status\": \"in_progress\",\n    \"category_id\": null,\n    \"manager_id\": 1,\n    \"agent_id\": 2\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Updated ticket title",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "urgency",
+									"value": "medium",
+									"type": "text"
+								},
+								{
+									"key": "deadline",
+									"value": "2026-02-20T10:00:00Z",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "in_progress",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "manager_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "agent_id",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "attachments",
+									"type": "file",
+									"src": [],
+									"description": "Optional. Max 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
 								}
-							}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/tickets/:id",
@@ -602,7 +676,7 @@
 								}
 							]
 						},
-						"description": "Update a ticket. All fields are optional (use 'sometimes' validation). Status values: open, in_progress, pending_review, completed, rejected, cancelled."
+						"description": "Update a ticket. Use multipart/form-data. All fields are optional. Status values: open, in_progress, pending_review, completed, rejected, cancelled. Optional attachments: max 5 files, 10MB each."
 					},
 					"response": []
 				},
@@ -880,11 +954,6 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
@@ -896,13 +965,27 @@
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"body\": \"This is a comment on the ticket\",\n    \"is_internal\": false\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "body",
+									"value": "This is a comment on the ticket",
+									"type": "text",
+									"description": "Required, max 255 characters"
+								},
+								{
+									"key": "is_internal",
+									"value": "false",
+									"type": "text",
+									"description": "Optional, defaults to false"
+								},
+								{
+									"key": "attachments",
+									"type": "file",
+									"src": [],
+									"description": "Optional. Max 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
 								}
-							}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/tickets/:id/comments",
@@ -923,12 +1006,50 @@
 								}
 							]
 						},
-						"description": "Create a comment on a ticket. Only ticket manager, assigned agent, or admins can add comments. Body is required (max 255 characters). is_internal is optional (defaults to false)."
+						"description": "Create a comment on a ticket. Use multipart/form-data. Only ticket manager, assigned agent, or admins can add comments. Body is required (max 255 characters). is_internal is optional (defaults to false). Optional attachments: max 5 files, 10MB each."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Attachment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/attachments/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"attachments",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Attachment ID"
+								}
+							]
+						},
+						"description": "Delete an attachment. Only ticket manager, assigned agent, or admins can delete attachments. The attachment file is removed from storage."
 					},
 					"response": []
 				}
 			],
-			"description": "Ticket management endpoints"
+			"description": "Ticket management endpoints. Attachments: Create/Update Ticket and Create Comment support optional file uploads. The attachment url in responses is a temporary signed URL (expires in 60 min) - use it immediately for download. No separate download route."
 		},
 		{
 			"name": "Users",

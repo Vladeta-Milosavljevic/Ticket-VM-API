@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\IndexTicketRequest;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Http\Resources\CommentResource;
@@ -12,7 +13,10 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Handles ticket lifecycle management and workflow operations.
@@ -65,7 +69,7 @@ class TicketController extends Controller
      */
     public function show(Ticket $ticket): TicketResource
     {
-        $ticket->load(['category', 'manager', 'agent', 'comments.user']);
+        $ticket->load(['category', 'manager', 'agent', 'comments.user', 'comments.attachments', 'attachments']);
 
         return new TicketResource($ticket);
     }
@@ -84,20 +88,22 @@ class TicketController extends Controller
     public function store(StoreTicketRequest $request): TicketResource
     {
         $validated = $request->validated();
+        $ticketData = Arr::except($validated, ['attachments']);
 
         // Auto-assign manager if user is a manager and no manager_id provided
-        // This allows managers to quickly create tickets without specifying themselves
-        if ($request->user()->isManager() && ! isset($validated['manager_id'])) {
-            $validated['manager_id'] = $request->user()->id;
+        if ($request->user()->isManager() && ! isset($ticketData['manager_id'])) {
+            $ticketData['manager_id'] = $request->user()->id;
         }
 
         // Restrict agent assignment during creation to admins/managers only
-        // Non-managers cannot assign agents - they must use the assign endpoint
-        // This ensures proper workflow: ticket created → manager assigns agent
         if (! $request->user()->isAdmin() && ! $request->user()->isManager()) {
-            unset($validated['agent_id']);
+            unset($ticketData['agent_id']);
         }
-        $ticket = Ticket::create($validated);
+        $ticket = Ticket::create($ticketData);
+
+        if ($request->hasFile('attachments')) {
+            $this->storeAttachments($request->file('attachments'), $ticket, $request->user());
+        }
 
         // Log ticket creation for audit trail
         Log::info('Ticket created', [
@@ -111,8 +117,7 @@ class TicketController extends Controller
             'status' => $ticket->status,
         ]);
 
-        // Load the relationships to prevent N+1 queries when returning the resource
-        return new TicketResource($ticket->load(['category', 'manager', 'agent']));
+        return new TicketResource($ticket->load(['category', 'manager', 'agent', 'attachments']));
     }
 
     /**
@@ -124,11 +129,17 @@ class TicketController extends Controller
      */
     public function update(UpdateTicketRequest $request, Ticket $ticket): TicketResource
     {
+        $validated = $request->validated();
+        $ticketData = Arr::except($validated, ['attachments']);
         $oldStatus = $ticket->status;
-        $ticket->update($request->validated());
+        $ticket->update($ticketData);
+
+        if ($request->hasFile('attachments')) {
+            $this->storeAttachments($request->file('attachments'), $ticket, $request->user());
+        }
 
         // Log status changes for workflow tracking
-        $freshTicket = $ticket->fresh();
+        $freshTicket = $ticket->fresh(['category', 'manager', 'agent', 'attachments']);
         if ($oldStatus !== $freshTicket->status) {
             Log::info('Ticket status changed', [
                 'user_id' => $request->user()->id,
@@ -327,6 +338,40 @@ class TicketController extends Controller
     }
 
     /**
+     * Store attachments for an attachable model (Ticket or Comment).
+     */
+    private function storeAttachments(array $files, Ticket|\App\Models\Comment $attachable, User $user): void
+    {
+        $disk = config('filesystems.default') === 's3' ? 's3' : 'public';
+        $pathSegment = strtolower(class_basename($attachable::class)).'s';
+
+        foreach ($files as $file) {
+            $sanitizedFilename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                .'.'.$file->getClientOriginalExtension();
+            $path = "attachments/{$pathSegment}/{$attachable->id}/".Str::uuid()."_{$sanitizedFilename}";
+
+            Storage::disk($disk)->put($path, $file->get());
+
+            $attachable->attachments()->create([
+                'filename' => $sanitizedFilename,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'disk' => $disk,
+                'path' => $path,
+                'user_id' => $user->id,
+            ]);
+
+            Log::info('Attachment uploaded', [
+                'user_id' => $user->id,
+                'attachable_type' => $attachable::class,
+                'attachable_id' => $attachable->id,
+                'filename' => $sanitizedFilename,
+            ]);
+        }
+    }
+
+    /**
      * Get comments for a specific ticket.
      *
      * Authorization: Only ticket manager, assigned agent, or admins can view comments.
@@ -339,8 +384,8 @@ class TicketController extends Controller
     {
         $this->authorize('viewComments', $ticket);
 
-        // Eager load user relationship to avoid N+1 queries
-        $comments = $ticket->comments()->with('user')->latest()->paginate(15);
+        // Eager load user and attachments to avoid N+1 queries
+        $comments = $ticket->comments()->with(['user', 'attachments'])->latest()->paginate(15);
 
         return CommentResource::collection($comments);
     }
@@ -355,20 +400,21 @@ class TicketController extends Controller
      * - is_internal is optional (defaults to false if not provided)
      * - user_id is automatically set to authenticated user
      */
-    public function storeComment(Request $request, Ticket $ticket): CommentResource|JsonResponse
+    public function storeComment(StoreCommentRequest $request, Ticket $ticket): CommentResource|JsonResponse
     {
-        $this->authorize('createComment', $ticket);
-
         $user = $request->user();
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:255'],
-            'is_internal' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
+        $commentData = Arr::except($validated, ['attachments']);
+
         $comment = $ticket->comments()->create([
-            'body' => $validated['body'],
-            'is_internal' => $validated['is_internal'] ?? false, // Default to false if not provided
-            'user_id' => $user->id, // Automatically set to authenticated user
+            'body' => $commentData['body'],
+            'is_internal' => $commentData['is_internal'] ?? false,
+            'user_id' => $user->id,
         ]);
+
+        if ($request->hasFile('attachments')) {
+            $this->storeAttachments($request->file('attachments'), $comment, $user);
+        }
 
         // Log comment creation for audit trail
         Log::info('Comment created on ticket', [
@@ -380,7 +426,6 @@ class TicketController extends Controller
             'is_internal' => $comment->is_internal,
         ]);
 
-        // Eager load user relationship before returning
-        return (new CommentResource($comment->load('user')))->response()->setStatusCode(201);
+        return (new CommentResource($comment->load(['user', 'attachments'])))->response()->setStatusCode(201);
     }
 }

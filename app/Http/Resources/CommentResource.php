@@ -30,6 +30,7 @@ class CommentResource extends JsonResource
             'user' => new UserResource($this->whenLoaded('user')),
             'body' => $this->body,
             'is_internal' => $this->is_internal,
+            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];

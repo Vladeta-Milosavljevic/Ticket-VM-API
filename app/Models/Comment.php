@@ -5,10 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Storage;
 
 class Comment extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Comment $comment): void {
+            foreach ($comment->attachments as $attachment) {
+                Storage::disk($attachment->disk)->delete($attachment->path);
+            }
+            $comment->attachments()->delete();
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -42,5 +54,10 @@ class Comment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 }
