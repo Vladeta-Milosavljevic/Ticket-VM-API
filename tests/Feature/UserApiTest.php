@@ -119,7 +119,7 @@ test('admin can delete user', function () {
     $response = $this->deleteJson("/api/users/{$user->id}");
 
     $response->assertStatus(200);
-    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    $this->assertSoftDeleted($user);
 });
 
 test('manager cannot delete user', function () {
@@ -127,6 +127,29 @@ test('manager cannot delete user', function () {
     $user = User::factory()->create();
 
     $response = $this->deleteJson("/api/users/{$user->id}");
+
+    $response->assertStatus(403);
+});
+
+test('admin can restore user', function () {
+    authenticateAs(User::factory()->admin()->create());
+    $user = User::factory()->create();
+    $user->delete();
+
+    $response = $this->postJson("/api/users/{$user->id}/restore");
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.id', $user->id)
+        ->assertJsonPath('data.email', $user->email);
+    $this->assertNotSoftDeleted($user);
+});
+
+test('manager cannot restore user', function () {
+    authenticateAs(User::factory()->manager()->create());
+    $user = User::factory()->create();
+    $user->delete();
+
+    $response = $this->postJson("/api/users/{$user->id}/restore");
 
     $response->assertStatus(403);
 });

@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Additional user-specific routes
     Route::prefix('users/{user}')->group(function () {
         Route::get('/tickets', [UserController::class, 'tickets'])->name('users.tickets');
+        Route::post('/restore', [UserController::class, 'restore'])->name('users.restore')->withTrashed();
     });
 
 });

@@ -44,6 +44,7 @@ class AttachmentResource extends JsonResource
                 return Storage::disk($this->disk)->temporaryUrl($this->path, now()->addMinutes(60));
             }
 
+            // For the 'public' disk, run `php artisan storage:link` so /storage URLs resolve correctly.
             return Storage::disk($this->disk)->url($this->path);
         } catch (\Throwable) {
             return null;

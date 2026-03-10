@@ -24,8 +24,8 @@ class IndexTicketRequest extends FormRequest
     {
         return [
             'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('is_archived', 0)],
-            'manager_id' => ['nullable', 'integer', 'exists:users,id'],
-            'agent_id' => ['nullable', 'integer', 'exists:users,id'],
+            'manager_id' => ['nullable', 'integer', Rule::exists('users', 'id')->whereNull('deleted_at')],
+            'agent_id' => ['nullable', 'integer', Rule::exists('users', 'id')->whereNull('deleted_at')],
             'status' => ['nullable', 'string', Rule::in(['open', 'in_progress', 'pending_review', 'completed', 'rejected', 'cancelled'])],
             'urgency' => ['nullable', 'string', Rule::in(['low', 'medium', 'high', 'critical'])],
             'unassigned' => ['nullable', 'boolean'],

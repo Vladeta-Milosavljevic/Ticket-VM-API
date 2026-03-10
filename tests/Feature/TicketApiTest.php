@@ -161,6 +161,69 @@ test('agent cannot update ticket they are not assigned to', function () {
     $response->assertStatus(403);
 });
 
+test('assigned agent can update non-workflow fields but workflow fields are filtered out', function () {
+    $agent = User::factory()->agent()->create();
+    $manager = User::factory()->manager()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+        'status' => 'in_progress',
+        'title' => 'Original Title',
+    ]);
+    authenticateAs($agent);
+
+    $response = $this->putJson("/api/tickets/{$ticket->id}", [
+        'title' => 'Updated by Agent',
+        'status' => 'completed',
+        'completed_by_agent_at' => now()->format('Y-m-d H:i:s'),
+        'completed_by_manager_at' => now()->format('Y-m-d H:i:s'),
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.title', 'Updated by Agent');
+
+    $ticket->refresh();
+    expect($ticket->title)->toBe('Updated by Agent')
+        ->and($ticket->status)->toBe('in_progress')
+        ->and($ticket->completed_by_agent_at)->toBeNull()
+        ->and($ticket->completed_by_manager_at)->toBeNull();
+});
+
+test('ticket manager can update workflow fields', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+        'status' => 'open',
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->putJson("/api/tickets/{$ticket->id}", [
+        'status' => 'in_progress',
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.status', 'in_progress');
+
+    expect($ticket->fresh()->status)->toBe('in_progress');
+});
+
+test('admin can update workflow fields', function () {
+    $admin = User::factory()->admin()->create();
+    $ticket = Ticket::factory()->create(['status' => 'open']);
+    authenticateAs($admin);
+
+    $response = $this->putJson("/api/tickets/{$ticket->id}", [
+        'status' => 'cancelled',
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.status', 'cancelled');
+
+    expect($ticket->fresh()->status)->toBe('cancelled');
+});
+
 test('admin can delete ticket', function () {
     authenticateAs(User::factory()->admin()->create());
     $ticket = Ticket::factory()->create();

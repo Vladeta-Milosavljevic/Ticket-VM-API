@@ -19,19 +19,24 @@ class AttachmentController extends Controller
     {
         $this->authorize('delete', $attachment);
 
+        $user = $request->user();
         $attachmentId = $attachment->id;
         $path = $attachment->path;
         $disk = $attachment->disk;
 
+        Log::info('Attachment deleted', [
+            'deleted_by_user_id' => $user->id,
+            'deleted_by_user_email' => $user->email,
+            'attachment_id' => $attachmentId,
+            'attachable_type' => $attachment->attachable_type,
+            'attachable_id' => $attachment->attachable_id,
+            'original_name' => $attachment->original_name,
+            'path' => $path,
+        ]);
+
         $attachment->delete();
 
         Storage::disk($disk)->delete($path);
-
-        Log::info('Attachment deleted', [
-            'user_id' => $request->user()->id,
-            'attachment_id' => $attachmentId,
-            'path' => $path,
-        ]);
 
         return response()->json(['message' => 'Attachment deleted successfully'], 200);
     }

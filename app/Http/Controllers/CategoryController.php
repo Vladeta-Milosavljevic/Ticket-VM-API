@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexCategoryRequest;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
@@ -19,17 +20,18 @@ class CategoryController extends Controller
      *
      * Supports filtering: ?active_only=1 (only active) or ?archived=1 (only archived).
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(IndexCategoryRequest $request): AnonymousResourceCollection
     {
+        $validated = $request->validated();
         $query = Category::query();
 
-        if ($request->boolean('active_only')) {
+        if (filter_var($validated['active_only'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
             $query->active();
-        } elseif ($request->boolean('archived')) {
+        } elseif (filter_var($validated['archived'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
             $query->where('is_archived', true);
         }
 
-        $categories = $query->orderBy('name')->get();
+        $categories = $query->orderBy('name')->paginate(15);
 
         return CategoryResource::collection($categories);
     }

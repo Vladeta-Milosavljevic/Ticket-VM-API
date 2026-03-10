@@ -13,7 +13,7 @@ class StoreTicketRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', Ticket::class); // Adjust based on your authorization logic
+        return $this->user()->can('create', Ticket::class);
     }
 
     /**
@@ -31,13 +31,15 @@ class StoreTicketRequest extends FormRequest
             'urgency' => ['required', 'in:low,medium,high,critical'],
             'deadline' => ['required', 'date', 'after:now'],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('is_archived', 0)],
-            'manager_id' => [$user?->isAdmin() || $user?->isManager() ? 'nullable' : 'required', Rule::exists('users', 'id')->where('role', ['manager', 'admin'])],
-            'agent_id' => ['nullable', Rule::exists('users', 'id')->where('role', 'agent')],
+            'manager_id' => [$user?->isAdmin() || $user?->isManager() ? 'nullable' : 'required',
+                Rule::exists('users', 'id')->whereNull('deleted_at')->whereIn('role', ['manager', 'admin'])],
+            'agent_id' => ['nullable', Rule::exists('users', 'id')->whereNull('deleted_at')->where('role', 'agent')],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => [
                 'file',
                 'mimes:jpeg,png,gif,pdf,doc,docx,txt',
-                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
+                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,
+                    application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
                 'max:10240',
             ],
         ];

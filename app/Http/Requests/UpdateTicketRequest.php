@@ -29,8 +29,8 @@ class UpdateTicketRequest extends FormRequest
             'deadline' => ['sometimes', 'date', 'after_or_equal:now'],
             'status' => ['sometimes', 'in:open,in_progress,pending_review,completed,rejected,cancelled'],
             'category_id' => ['sometimes', 'nullable', Rule::exists('categories', 'id')->where('is_archived', 0)],
-            'manager_id' => ['sometimes', 'exists:users,id'],
-            'agent_id' => ['sometimes', 'nullable', 'exists:users,id'],
+            'manager_id' => ['sometimes', Rule::exists('users', 'id')->whereNull('deleted_at')->whereIn('role', ['manager', 'admin'])],
+            'agent_id' => ['sometimes', 'nullable', Rule::exists('users', 'id')->whereNull('deleted_at')->where('role', 'agent')],
             'completed_by_agent_at' => ['sometimes', 'nullable', 'date'],
             'completed_by_manager_at' => ['sometimes', 'nullable', 'date'],
             'rejected_at' => ['sometimes', 'nullable', 'date'],
@@ -39,7 +39,8 @@ class UpdateTicketRequest extends FormRequest
             'attachments.*' => [
                 'file',
                 'mimes:jpeg,png,gif,pdf,doc,docx,txt',
-                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
+                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,
+                    application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
                 'max:10240',
             ],
         ];

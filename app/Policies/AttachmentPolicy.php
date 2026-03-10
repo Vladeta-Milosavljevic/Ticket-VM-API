@@ -3,9 +3,9 @@
 namespace App\Policies;
 
 use App\Models\Attachment;
+use App\Models\Comment;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Models\Comment;
 
 class AttachmentPolicy
 {
@@ -50,6 +50,10 @@ class AttachmentPolicy
             return $user->isAdmin()
                 || $ticket->manager_id === $user->id
                 || $ticket->agent_id === $user->id;
+        }
+
+        if ($attachable === null) {
+            return false; // Orphaned attachment - parent was deleted
         }
 
         return false;

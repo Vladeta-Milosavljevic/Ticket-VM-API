@@ -36,6 +36,48 @@ test('authenticated user can list categories', function () {
         ->assertJsonCount(3, 'data');
 });
 
+test('authenticated user can filter categories by active_only', function () {
+    authenticateAs();
+    Category::factory()->create(['is_archived' => false, 'name' => 'Active A']);
+    Category::factory()->create(['is_archived' => false, 'name' => 'Active B']);
+    Category::factory()->create(['is_archived' => true, 'name' => 'Archived']);
+
+    $response = $this->getJson('/api/categories?active_only=1');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(2, 'data');
+});
+
+test('authenticated user can filter categories by archived', function () {
+    authenticateAs();
+    Category::factory()->create(['is_archived' => false, 'name' => 'Active']);
+    Category::factory()->create(['is_archived' => true, 'name' => 'Archived A']);
+    Category::factory()->create(['is_archived' => true, 'name' => 'Archived B']);
+
+    $response = $this->getJson('/api/categories?archived=1');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(2, 'data');
+});
+
+test('index rejects invalid active_only value', function () {
+    authenticateAs();
+
+    $response = $this->getJson('/api/categories?active_only=invalid');
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['active_only']);
+});
+
+test('index rejects invalid archived value', function () {
+    authenticateAs();
+
+    $response = $this->getJson('/api/categories?archived=invalid');
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['archived']);
+});
+
 test('authenticated user can view a category', function () {
     authenticateAs();
     $category = Category::factory()->create();

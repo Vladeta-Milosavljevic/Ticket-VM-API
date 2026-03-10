@@ -103,6 +103,7 @@ class UserController extends Controller
             'deleted_user_role' => $user->role,
         ]);
 
+        $user->tokens()->delete();
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully'], 200);
@@ -117,11 +118,38 @@ class UserController extends Controller
     {
         $this->authorize('viewTickets', $user);
 
-        $tickets = $user->tickets()
+        $tickets = ($user->isManager() ? $user->managerTickets() : $user->tickets())
             ->with(['category', 'manager', 'agent'])
             ->latest()
             ->paginate(15);
 
         return TicketResource::collection($tickets);
+    }
+
+    /**
+     * Restore a soft-deleted user.
+     *
+     * Authorization: Only admins can restore users.
+     */
+    public function restore(Request $request, User $user): UserResource|JsonResponse
+    {
+        $this->authorize('restore', $user);
+
+        $currentUser = $request->user();
+
+        if (! $user->trashed()) {
+            return response()->json(['message' => 'User is not deleted'], 400);
+        }
+
+        $user->restore();
+
+        Log::info('User restored', [
+            'restored_by_user_id' => $currentUser->id,
+            'restored_by_user_email' => $currentUser->email,
+            'restored_user_id' => $user->id,
+            'restored_user_email' => $user->email,
+        ]);
+
+        return new UserResource($user->fresh());
     }
 }

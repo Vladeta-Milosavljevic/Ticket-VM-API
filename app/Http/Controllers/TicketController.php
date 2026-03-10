@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssignTicketRequest;
 use App\Http\Requests\IndexTicketRequest;
+use App\Http\Requests\RejectTicketRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
@@ -121,16 +123,41 @@ class TicketController extends Controller
     }
 
     /**
+     * Workflow fields that only admin or assigned manager can update.
+     * Others (e.g. assigned agent) can update title, description, urgency, deadline, category_id.
+     *
+     * @var list<string>
+     */
+    private const WORKFLOW_FIELDS = [
+        'status',
+        'manager_id',
+        'agent_id',
+        'completed_by_agent_at',
+        'completed_by_manager_at',
+        'rejected_at',
+        'rejection_reason',
+    ];
+
+    /**
      * Update the specified ticket.
      *
      * Authorization: Admin, ticket manager, or assigned agent can update.
-     * Uses fresh() to ensure we return the latest data after update,
-     * including any database-level changes (triggers, defaults, etc.)
+     * Workflow fields (status, manager_id, agent_id, timestamps, rejection_reason) are
+     * only persisted when the user is admin or the ticket's assigned manager.
+     * Uses fresh() to ensure we return the latest data after update.
      */
     public function update(UpdateTicketRequest $request, Ticket $ticket): TicketResource
     {
         $validated = $request->validated();
         $ticketData = Arr::except($validated, ['attachments']);
+
+        $canUpdateWorkflow = $request->user()->isAdmin()
+            || $ticket->manager_id === $request->user()->id;
+
+        if (! $canUpdateWorkflow) {
+            $ticketData = Arr::except($ticketData, self::WORKFLOW_FIELDS);
+        }
+
         $oldStatus = $ticket->status;
         $ticket->update($ticketData);
 
@@ -188,21 +215,12 @@ class TicketController extends Controller
      * This is a separate endpoint from update() to enforce the workflow:
      * tickets are created first, then agents are assigned by managers.
      */
-    public function assign(Request $request, Ticket $ticket): TicketResource|JsonResponse
+    public function assign(AssignTicketRequest $request, Ticket $ticket): TicketResource|JsonResponse
     {
-        $this->authorize('assign', $ticket);
-
         $user = $request->user();
-        $validated = $request->validate([
-            'agent_id' => ['required', 'exists:users,id'],
-        ]);
+        $validated = $request->validated();
         $oldAgentId = $ticket->agent_id;
 
-        // Verify the agent is an agent
-        $agent = User::findOrFail($validated['agent_id']);
-        if (! $agent->isAgent()) {
-            return response()->json(['message' => 'User is not an agent'], 400);
-        }
         $ticket->update(['agent_id' => $validated['agent_id']]);
 
         // Log agent assignment for workflow tracking
@@ -302,19 +320,15 @@ class TicketController extends Controller
      * - rejection_reason is required (provides feedback for agent)
      * - rejected_at timestamp is recorded for tracking
      */
-    public function reject(Request $request, Ticket $ticket): TicketResource|JsonResponse
+    public function reject(RejectTicketRequest $request, Ticket $ticket): TicketResource|JsonResponse
     {
-        $this->authorize('reject', $ticket);
-
         $user = $request->user();
         // Only pending review tickets can be rejected
         if ($ticket->status !== 'pending_review') {
             return response()->json(['message' => 'Ticket must be pending review to be rejected'], 400);
         }
 
-        $validated = $request->validate([
-            'rejection_reason' => ['required', 'string'],
-        ]);
+        $validated = $request->validated();
         $ticket->update([
             'status' => 'in_progress', // Reset status - agent must redo work
             'rejection_reason' => $validated['rejection_reason'], // Required feedback

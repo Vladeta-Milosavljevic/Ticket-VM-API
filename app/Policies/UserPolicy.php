@@ -47,6 +47,14 @@ class UserPolicy
     }
 
     /**
+     * Determine whether the user can restore a soft-deleted user.
+     */
+    public function restore(User $user, User $model): bool
+    {
+        return $user->isAdmin();
+    }
+
+    /**
      * Determine whether the user can view tickets assigned to another user.
      */
     public function viewTickets(User $user, User $model): bool
