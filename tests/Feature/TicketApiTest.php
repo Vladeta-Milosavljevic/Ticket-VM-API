@@ -86,6 +86,24 @@ test('tickets can be filtered by unassigned', function () {
         ->assertJsonPath('data.0.id', $unassignedTicket->id);
 });
 
+test('index rejects invalid sort value', function () {
+    authenticateAs();
+
+    $response = $this->getJson('/api/tickets?sort=invalid');
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['sort']);
+});
+
+test('index rejects invalid order value', function () {
+    authenticateAs();
+
+    $response = $this->getJson('/api/tickets?order=invalid');
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['order']);
+});
+
 test('authenticated user can view a ticket', function () {
     authenticateAs();
     $ticket = Ticket::factory()->create();
@@ -309,4 +327,209 @@ test('assigned agent can add comment', function () {
         'ticket_id' => $ticket->id,
         'body' => 'Test comment from agent',
     ]);
+});
+
+// Reject flow
+test('manager can reject ticket in pending_review', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->pendingReview()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/reject", [
+        'rejection_reason' => 'Needs more detail on the implementation.',
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.status', 'in_progress')
+        ->assertJsonPath('data.rejection_reason', 'Needs more detail on the implementation.');
+
+    $ticket->refresh();
+    expect($ticket->status)->toBe('in_progress')
+        ->and($ticket->rejection_reason)->toBe('Needs more detail on the implementation.')
+        ->and($ticket->completed_by_agent_at)->toBeNull()
+        ->and($ticket->rejected_at)->not->toBeNull();
+});
+
+test('reject requires rejection_reason', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->pendingReview()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/reject", []);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['rejection_reason']);
+});
+
+test('reject with empty rejection_reason fails validation', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->pendingReview()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/reject", [
+        'rejection_reason' => '',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['rejection_reason']);
+});
+
+test('reject when not pending_review returns 400', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+        'status' => 'in_progress',
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/reject", [
+        'rejection_reason' => 'Some feedback',
+    ]);
+
+    $response->assertStatus(400)
+        ->assertJson(['message' => 'Ticket must be pending review to be rejected']);
+});
+
+test('agent cannot reject ticket', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->pendingReview()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+    ]);
+    authenticateAs($agent);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/reject", [
+        'rejection_reason' => 'I reject myself',
+    ]);
+
+    $response->assertStatus(403);
+});
+
+// Complete edge cases
+test('complete when ticket has no agent returns 400', function () {
+    $admin = User::factory()->admin()->create();
+    $manager = User::factory()->manager()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => null,
+        'status' => 'in_progress',
+    ]);
+    authenticateAs($admin);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/complete");
+
+    $response->assertStatus(400)
+        ->assertJson(['message' => 'Ticket must have an assigned agent']);
+});
+
+test('complete when already completed returns 400', function () {
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->completed()->create(['agent_id' => $agent->id]);
+    authenticateAs($agent);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/complete");
+
+    $response->assertStatus(400)
+        ->assertJson(['message' => 'Ticket is already completed']);
+});
+
+test('complete when pending_review returns 400', function () {
+    $agent = User::factory()->agent()->create();
+    $manager = User::factory()->manager()->create();
+    $ticket = Ticket::factory()->pendingReview()->create([
+        'agent_id' => $agent->id,
+        'manager_id' => $manager->id,
+    ]);
+    authenticateAs($agent);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/complete");
+
+    $response->assertStatus(400)
+        ->assertJson(['message' => 'Ticket cannot be completed in current status']);
+});
+
+test('unassigned agent cannot complete ticket', function () {
+    $manager = User::factory()->manager()->create();
+    $assignedAgent = User::factory()->agent()->create();
+    $otherAgent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $assignedAgent->id,
+        'status' => 'in_progress',
+    ]);
+    authenticateAs($otherAgent);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/complete");
+
+    $response->assertStatus(403);
+});
+
+// Approve edge cases
+test('approve when not pending_review returns 400', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+        'status' => 'in_progress',
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/approve");
+
+    $response->assertStatus(400)
+        ->assertJson(['message' => 'Ticket must be pending review to be approved']);
+});
+
+// Comment permissions
+test('ticket manager can add comment', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+    ]);
+    authenticateAs($manager);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/comments", [
+        'body' => 'Comment from manager',
+    ]);
+
+    $response->assertStatus(201);
+    $this->assertDatabaseHas('comments', [
+        'ticket_id' => $ticket->id,
+        'body' => 'Comment from manager',
+    ]);
+});
+
+test('unassigned agent cannot add comment', function () {
+    $manager = User::factory()->manager()->create();
+    $assignedAgent = User::factory()->agent()->create();
+    $otherAgent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $assignedAgent->id,
+    ]);
+    authenticateAs($otherAgent);
+
+    $response = $this->postJson("/api/tickets/{$ticket->id}/comments", [
+        'body' => 'Comment from unassigned agent',
+    ]);
+
+    $response->assertStatus(403);
 });

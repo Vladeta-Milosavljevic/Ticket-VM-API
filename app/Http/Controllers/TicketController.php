@@ -17,7 +17,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -362,9 +361,13 @@ class TicketController extends Controller
         foreach ($files as $file) {
             $sanitizedFilename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
                 .'.'.$file->getClientOriginalExtension();
-            $path = "attachments/{$pathSegment}/{$attachable->id}/".Str::uuid()."_{$sanitizedFilename}";
 
-            Storage::disk($disk)->put($path, $file->get());
+            // Store the file in the storage directory and return the path, also memory efficient.
+            $path = $file->storeAs(
+                "attachments/{$pathSegment}/{$attachable->id}",
+                Str::uuid()."_{$sanitizedFilename}",
+                ['disk' => $disk]
+            );
 
             $attachable->attachments()->create([
                 'filename' => $sanitizedFilename,

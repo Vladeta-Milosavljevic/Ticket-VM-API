@@ -1,14 +1,11 @@
 {
     "agents": [
-        "claude_code",
         "cursor",
-        "opencode",
         "phpstorm"
     ],
     "editors": [
         "cursor",
-        "phpstorm",
-        "vscode"
+        "phpstorm"
     ],
     "guidelines": [],
     "herd_mcp": true

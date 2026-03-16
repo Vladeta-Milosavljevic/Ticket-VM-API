@@ -153,18 +153,16 @@ class CategoryController extends Controller
         $slug = $baseSlug;
         $counter = 1;
 
-        $query = Category::where('slug', $slug);
-        if ($excludeId !== null) {
-            $query->where('id', '!=', $excludeId);
-        }
-
-        while ($query->exists()) {
-            $slug = $baseSlug.'-'.$counter;
-            $counter++;
+        while (true) {
             $query = Category::where('slug', $slug);
             if ($excludeId !== null) {
                 $query->where('id', '!=', $excludeId);
             }
+            if (! $query->exists()) {
+                break;
+            }
+            $slug = $baseSlug.'-'.$counter;
+            $counter++;
         }
 
         return $slug;

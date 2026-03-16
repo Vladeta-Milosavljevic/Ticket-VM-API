@@ -29,7 +29,20 @@ class UpdateUserRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,'.$userId],
             'password' => ['sometimes', 'string', 'min:8'],
-            'role' => ['sometimes', Rule::in($this->user()->isAdmin() ? ['admin', 'manager', 'agent'] : ['manager', 'agent'])],
+            'role' => ['sometimes', Rule::in($this->user()->isAdmin() ? ['admin', 'manager', 'agent'] : ['manager', 'agent']),
+                function ($attribute, $value, $fail) {
+                    $model = $this->route('user');
+                    if ($model->id !== $this->user()->id) {
+                        return;
+                    }
+                    $roleHierarchy = ['agent' => 0, 'manager' => 1, 'admin' => 2];
+                    $currentLevel = $roleHierarchy[$model->role] ?? 0;
+                    $newLevel = $roleHierarchy[$value] ?? 0;
+                    if ($newLevel < $currentLevel) {
+                        $fail('You cannot demote yourself.');
+                    }
+                },
+            ],
         ];
     }
 
@@ -46,6 +59,7 @@ class UpdateUserRequest extends FormRequest
             'email.unique' => 'The email has already been taken.',
             'password.min' => 'The password must be at least 8 characters.',
             'role.in' => 'The role must be one of: admin, manager, agent. Only admins can update the role to admin.',
+            'role.demote' => 'You cannot demote yourself.',
         ];
     }
 }

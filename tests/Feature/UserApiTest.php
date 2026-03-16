@@ -170,3 +170,21 @@ test('agent cannot view another user tickets', function () {
 
     $response->assertStatus(403);
 });
+
+test('admin cannot delete themselves', function () {
+    $admin = authenticateAs(User::factory()->admin()->create());
+    $response = $this->deleteJson("/api/users/{$admin->id}");
+
+    $response->assertStatus(403);
+    $this->assertDatabaseHas('users', ['id' => $admin->id]);
+});
+
+test('admin cannot demote themselves', function () {
+    $admin = authenticateAs(User::factory()->admin()->create());
+    $response = $this->putJson("/api/users/{$admin->id}", [
+        'role' => 'manager',
+    ]);
+
+    $response->assertStatus(422);
+    $this->assertDatabaseHas('users', ['id' => $admin->id, 'role' => 'admin']);
+});

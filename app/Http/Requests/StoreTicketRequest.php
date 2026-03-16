@@ -38,8 +38,7 @@ class StoreTicketRequest extends FormRequest
             'attachments.*' => [
                 'file',
                 'mimes:jpeg,png,gif,pdf,doc,docx,txt',
-                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,
-                    application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
+                'mimetypes:image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
                 'max:10240',
             ],
         ];

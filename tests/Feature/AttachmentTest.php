@@ -193,3 +193,25 @@ test('unauthorized user receives 403 on attachment delete', function () {
     $response->assertStatus(403);
     $this->assertDatabaseHas('attachments', ['id' => $attachment->id]);
 });
+
+test('authorized user can delete comment attachment', function () {
+    $manager = User::factory()->manager()->create();
+    $agent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $agent->id,
+    ]);
+    $comment = Comment::factory()->for($ticket)->create(['user_id' => $agent->id]);
+    $attachment = Attachment::factory()->forComment($comment)->create([
+        'user_id' => $agent->id,
+        'path' => 'attachments/comments/'.$comment->id.'/test.pdf',
+    ]);
+    Storage::disk('public')->put($attachment->path, 'fake content');
+    authenticateAs($manager);
+
+    $response = $this->deleteJson("/api/attachments/{$attachment->id}");
+
+    $response->assertStatus(200);
+    $this->assertDatabaseMissing('attachments', ['id' => $attachment->id]);
+    Storage::disk('public')->assertMissing($attachment->path);
+});

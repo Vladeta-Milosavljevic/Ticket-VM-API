@@ -24,6 +24,13 @@ class AttachmentController extends Controller
         $path = $attachment->path;
         $disk = $attachment->disk;
 
+        // Delete the file from the storage directory.
+        if (! Storage::disk($disk)->delete($path)) {
+            return response()->json(['message' => 'Failed to delete file from storage'], 500);
+        }
+        // Delete the attachment from the database.
+        $attachment->delete();
+        // Log the attachment deletion for audit trail.
         Log::info('Attachment deleted', [
             'deleted_by_user_id' => $user->id,
             'deleted_by_user_email' => $user->email,
@@ -33,10 +40,6 @@ class AttachmentController extends Controller
             'original_name' => $attachment->original_name,
             'path' => $path,
         ]);
-
-        $attachment->delete();
-
-        Storage::disk($disk)->delete($path);
 
         return response()->json(['message' => 'Attachment deleted successfully'], 200);
     }

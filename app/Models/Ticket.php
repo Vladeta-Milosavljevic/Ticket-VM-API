@@ -17,6 +17,7 @@ class Ticket extends Model
     protected static function booted(): void
     {
         static::deleting(function (Ticket $ticket): void {
+            $ticket->load(['comments.attachments', 'attachments']);
             $ticket->comments->each->delete();
             foreach ($ticket->attachments as $attachment) {
                 Storage::disk($attachment->disk)->delete($attachment->path);

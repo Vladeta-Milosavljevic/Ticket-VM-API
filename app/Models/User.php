@@ -18,7 +18,7 @@ class User extends Authenticatable
     /**
      * The user's role.
      *
-     * @var 'admin'|'manager'|'agent'
+     * @property 'admin'|'manager'|'agent' $role
      */
 
     /**

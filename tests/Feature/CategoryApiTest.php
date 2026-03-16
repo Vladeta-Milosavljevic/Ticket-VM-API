@@ -161,3 +161,23 @@ test('admin can reactivate category', function () {
     $response->assertStatus(200);
     expect($category->fresh()->is_archived)->toBeFalse();
 });
+
+test('non-admin cannot archive category', function () {
+    authenticateAs(User::factory()->agent()->create());
+    $category = Category::factory()->create(['is_archived' => false]);
+
+    $response = $this->postJson("/api/categories/{$category->id}/archive");
+
+    $response->assertStatus(403);
+    expect($category->fresh()->is_archived)->toBeFalse();
+});
+
+test('non-admin cannot reactivate category', function () {
+    authenticateAs(User::factory()->manager()->create());
+    $category = Category::factory()->create(['is_archived' => true]);
+
+    $response = $this->postJson("/api/categories/{$category->id}/reactivate");
+
+    $response->assertStatus(403);
+    expect($category->fresh()->is_archived)->toBeTrue();
+});
