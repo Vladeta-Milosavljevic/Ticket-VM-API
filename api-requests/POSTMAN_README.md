@@ -18,36 +18,46 @@ This document provides instructions for using the TicketVM API Postman collectio
 1. Open Postman
 2. Click **Import** in the top left corner
 3. Select **File** tab
-4. Choose `TicketVM-API.postman_collection.json`
+4. Import these files from the `api-requests/` folder (you can select all three at once):
+    - `TicketVM-API.postman_collection.json`
+    - `TicketVM-Local.postman_environment.json`
+    - `TicketVM-Production.postman_environment.json`
 5. Click **Import**
 
-The collection will appear in your Postman workspace with all endpoints organized into folders.
+The collection will appear with folders for each resource. The two **environments** appear under **Environments** in the sidebar.
 
 ## ⚙️ Configuration
 
-### Base URLs
+### Choosing Local vs Production
 
-The collection uses the following variables:
+Use Postman’s **environment** dropdown (top right) to pick which base URL applies:
 
--   `{{base_url}}` - Set to `http://127.0.0.1:8000` by default (base URL for all endpoints)
--   `{{bearer_token}}` - Automatically populated after login (stores the authentication token)
+| Environment            | `base_url` value |
+| ---------------------- | ---------------- |
+| **TicketVM - Local**   | `http://127.0.0.1:8000` (or use your Herd URL if different) |
+| **TicketVM - Production** | `https://ticket-vm-api-main-narkga.free.laravel.cloud` |
 
-**Note:** All API endpoints explicitly include `/api` in their paths (e.g., `{{base_url}}/api/login`).
+When an environment is active, its variables **override** the collection’s default `base_url`. If you import the collection only and select **No Environment**, defaults stay at `http://127.0.0.1:8000` (safer than pointing at production by mistake).
 
-To change the base URL:
+**Caution:** With **TicketVM - Production** selected, mutating requests (updates, deletes, etc.) run against your **live** API and database. Double-check the environment before sending destructive calls.
 
-1. Click on the collection name
-2. Go to the **Variables** tab
-3. Update the `base_url` value
-4. Click **Save**
+### Base URLs and variables
 
-### Environment Variables (Optional)
+The collection uses:
 
-You can create a Postman environment for different configurations:
+-   `{{base_url}}` — API host (scheme + host, **no** trailing slash). Default on the collection: `http://127.0.0.1:8000`.
+-   `{{app_url}}` — Same host as `base_url` in the bundled environments (reserved for consistency with collection variables).
+-   `{{bearer_token}}` — Automatically populated after **Login** (stores the authentication token).
 
--   **Local Development**: `http://127.0.0.1:8000`
--   **Staging**: `https://staging.example.com`
--   **Production**: `https://api.example.com`
+**Note:** All API endpoints include `/api` in the path (e.g., `{{base_url}}/api/login`).
+
+### Changing the base URL manually
+
+1. Click the collection name → **Variables** tab, or edit the active environment’s variables.
+2. Update `base_url` (and `app_url` if you use it).
+3. Click **Save**.
+
+If your production hostname on Laravel Cloud changes, update `TicketVM-Production.postman_environment.json` (or the **TicketVM - Production** environment in Postman after import) and re-export if you version-control the file.
 
 ## 🔐 Authentication
 
@@ -389,7 +399,7 @@ Many endpoints have role-based authorization:
 
 1. **Login First**: Always start your testing session by calling the Login endpoint to get a bearer token
 2. **Token Management**: The bearer token is automatically saved after login - you don't need to manually copy it
-3. **Use Variables**: Update the `{{base_url}}` variable or create environments for different stages (local, staging, production)
+3. **Use Variables**: Select **TicketVM - Local** or **TicketVM - Production** (or edit `{{base_url}}` on the collection / environment)
 4. **Check Authorization**: Ensure your test user has the correct role for the endpoint
 5. **Handle Pagination**: Use the `page` query parameter for list endpoints
 6. **Validate Responses**: Check response status codes and error messages
