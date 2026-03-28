@@ -117,6 +117,10 @@ This revokes the token on the server. You'll need to login again to get a new to
 
 ## 📚 Endpoints Overview
 
+### Updates (Postman collection)
+
+The API defines updates as **`PUT`** routes. This Postman collection uses **HTTP `POST`** with **`_method=PUT`** (Laravel method spoofing) so **`multipart/form-data`** and file uploads behave reliably and all updates follow the same pattern. For JSON updates, include `"_method": "PUT"` in the body; for **Update Ticket**, add a form field `_method=PUT`. Direct **`PUT`** requests still work (e.g. JSON-only clients).
+
 ### Authentication
 
 -   `POST /api/login` - Authenticate user and receive bearer token
@@ -127,7 +131,7 @@ This revokes the token on the server. You'll need to login again to get a new to
 -   `GET /api/tickets` - List all tickets (paginated)
 -   `POST /api/tickets` - Create a new ticket
 -   `GET /api/tickets/{id}` - Get a specific ticket
--   `PUT /api/tickets/{id}` - Update a ticket
+-   `PUT /api/tickets/{id}` - Update a ticket (collection uses `POST` + `_method=PUT`; see [Updates (Postman collection)](#updates-postman-collection))
 -   `DELETE /api/tickets/{id}` - Delete a ticket
 -   `POST /api/tickets/{id}/assign` - Assign an agent to a ticket
 -   `POST /api/tickets/{id}/complete` - Mark ticket as completed
@@ -141,9 +145,10 @@ This revokes the token on the server. You'll need to login again to get a new to
 -   `GET /api/users` - List all users (paginated)
 -   `POST /api/users` - Create a new user
 -   `GET /api/users/{id}` - Get a specific user
--   `PUT /api/users/{id}` - Update a user
--   `DELETE /api/users/{id}` - Delete a user
--   `GET /api/users/{id}/tickets` - Get tickets assigned to a user
+-   `PUT /api/users/{id}` - Update a user (collection uses `POST` + JSON `_method`; see [Updates (Postman collection)](#updates-postman-collection))
+-   `DELETE /api/users/{id}` - Delete a user (soft delete)
+-   `POST /api/users/{id}/restore` - Restore a soft-deleted user (admin only)
+-   `GET /api/users/{id}/tickets` - Get tickets for a user: if the user is a **manager**, tickets they **manage**; otherwise (e.g. **agent**), tickets **assigned** to them as agent
 
 ## 📝 Request Examples
 
@@ -164,7 +169,7 @@ Use **multipart/form-data** for Create Ticket (supports optional file attachment
 
 ### Update Ticket
 
-Use **multipart/form-data** for Update Ticket (supports optional file attachments).
+Use **multipart/form-data** for Update Ticket (supports optional file attachments). Send **HTTP POST** with form field **`_method=PUT`** so uploads are handled correctly; the route remains **`PUT /api/tickets/{id}`**.
 
 All fields are optional. Only include fields you want to update. Optional `attachments`: max 5 files, 10MB each.
 
@@ -250,7 +255,7 @@ DELETE /api/attachments/:id
 
 -   **Create Ticket**, **Update Ticket**, and **Create Comment** accept optional `attachments` (multipart/form-data).
 -   Max 5 files per request, 10MB each. Allowed types: jpeg, png, gif, pdf, doc, docx, txt.
--   The `url` field in attachment responses is a **temporary signed URL** (expires in 60 minutes). Use it immediately for download. There is no separate download route.
+-   The `url` field in attachment responses depends on storage: **S3** returns a **temporary signed URL** (~60 minutes). The **public** disk (typical local dev) returns a regular public URL—run `php artisan storage:link` so `/storage` paths resolve. There is no separate download route.
 
 ## 📦 Response Formats
 
@@ -357,7 +362,7 @@ Many endpoints have role-based authorization:
 
 3. **Work on Ticket**
 
-    - Agent can update ticket details (`PUT /api/tickets/{id}`)
+    - Agent can update ticket details (`PUT /api/tickets/{id}`; Postman collection: `POST` + `_method=PUT`)
     - Agent can add comments (`POST /api/tickets/{id}/comments`)
 
 4. **Complete Ticket** (`POST /api/tickets/{id}/complete`)
@@ -375,9 +380,10 @@ Many endpoints have role-based authorization:
 
 1. **List Users** (`GET /api/users`) - View all users
 2. **Create User** (`POST /api/users`) - Only admins/managers
-3. **Update User** (`PUT /api/users/{id}`) - Only admins/managers
-4. **View User Tickets** (`GET /api/users/{id}/tickets`) - See tickets assigned to user
-5. **Delete User** (`DELETE /api/users/{id}`) - Only admins
+3. **Update User** (`PUT /api/users/{id}`; Postman collection: `POST` + JSON `_method`) - Only admins/managers
+4. **View User Tickets** (`GET /api/users/{id}/tickets`) - For a manager, tickets they manage; for an agent, tickets assigned to them
+5. **Delete User** (`DELETE /api/users/{id}`) - Only admins (soft delete)
+6. **Restore User** (`POST /api/users/{id}/restore`) - Only admins; use the soft-deleted user's id
 
 ## 💡 Tips & Best Practices
 
@@ -423,6 +429,6 @@ For issues or questions:
 
 ---
 
-**Last Updated:** February 8, 2026
+**Last Updated:** March 28, 2026
 
 **Authentication Method:** Bearer Token (Laravel Sanctum)

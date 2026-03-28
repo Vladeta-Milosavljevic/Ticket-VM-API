@@ -1,59 +1,153 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TicketVM API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+JSON REST API for ticket management: users, roles, categories, tickets with workflow, comments, and file attachments. Built with Laravel and protected by [Laravel Sanctum](https://laravel.com/docs/sanctum) token authentication.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Authentication
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- `POST /api/login` — email and password; returns a bearer token and user payload.
+- `POST /api/logout` — revokes the current access token (requires authentication).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Users
 
-## Learning Laravel
+- CRUD-style routes under `/api/users` (list, show, create, update, delete).
+- Authorization: Only admins and managers can create users; new users are created as agents only (`StoreUserRequest`). Only admins can delete users.
+- Soft deletes; restore with `POST /api/users/{user}/restore` (supports trashed users in the route).
+- `GET /api/users/{user}/tickets` — tickets associated with the user.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Roles and authorization
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Users have one of: **`admin`**, **`manager`**, **`agent`**. Access to actions is enforced with Laravel policies (`TicketPolicy`, `UserPolicy`, `CategoryPolicy`, `AttachmentPolicy`).
 
-## Laravel Sponsors
+### Tickets
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- Standard resource routes: list, create, show, update, delete (`/api/tickets`).
+- Workflow actions (on a single ticket):
+    - `POST /api/tickets/{ticket}/assign`
+    - `POST /api/tickets/{ticket}/complete`
+    - `POST /api/tickets/{ticket}/approve`
+    - `POST /api/tickets/{ticket}/reject`
+- **Listing filters** (query parameters on `GET /api/tickets`): `category_id`, `manager_id`, `agent_id`, `status`, `urgency`, `unassigned`, `overdue`, `search`, `deadline_from`, `deadline_to`, `sort` (`created_at`, `deadline`, `urgency`, `status`), `order` (`asc`, `desc`).
 
-### Premium Partners
+### Ticket fields and workflow
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Status** (for updates and filters): `open`, `in_progress`, `pending_review`, `completed`, `rejected`, `cancelled`.
+- **Urgency**: `low`, `medium`, `high`, `critical`.
+- Optional: `deadline`, `category_id`, `manager_id`, `agent_id`, plus completion and rejection timestamps/reason where applicable.
 
-## Contributing
+### Comments
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- `GET /api/tickets/{ticket}/comments` — list comments.
+- `POST /api/tickets/{ticket}/comments` — add a comment.
+- Optional **is_internal** flag on comments (stored and returned in the API for clients or future visibility rules).
 
-## Code of Conduct
+### Attachments
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Polymorphic attachments on tickets and comments.
+- `DELETE /api/attachments/{attachment}` — remove an attachment.
+- For **local development**, run `php artisan storage:link` so files on the `public` disk are served from `public/storage` (see [Laravel public disk](https://laravel.com/docs/filesystem#the-public-disk)).
 
-## Security Vulnerabilities
+### Categories
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- CRUD under `/api/categories`.
+- `POST /api/categories/{category}/archive` and `POST /api/categories/{category}/reactivate`.
+- Unique `name` and `slug`; `is_archived` for soft retirement.
+
+## Tech stack
+
+- PHP **^8.2**
+- Laravel **12**
+- Laravel Sanctum **^4.2** (API tokens)
+- [Pest](https://pestphp.com/) for tests
+- Default local database in `.env.example` is **SQLite**; you can switch to MySQL or PostgreSQL via `DB_*` variables.
+
+## Local setup
+
+1. Clone the repository and install dependencies:
+
+    ```bash
+    composer install
+    ```
+
+2. Environment:
+
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+
+3. Database:
+
+    ```bash
+    php artisan migrate
+    ```
+
+4. **Storage (local development):** create the symlink for public file access (uploads / attachments):
+
+    ```bash
+    php artisan storage:link
+    ```
+
+5. **Optional demo data:**
+
+    ```bash
+    php artisan db:seed
+    ```
+
+    This creates sample users (1 admin, 3 managers, 6 agents), categories, tickets, comments, and attachments. Seeded users use the factory default password: **`password`**. Admin user: **`admin@example.com`**.
+
+## API usage
+
+- **Base URL:** paths are prefixed with `/api` (e.g. `https://your-app.test/api/login`).
+- **Authenticated requests:** send `Authorization: Bearer {token}` using the `token` value from the login response.
+
+### Route overview
+
+| Method    | Path                                    | Description                     |
+| --------- | --------------------------------------- | ------------------------------- |
+| POST      | `/api/login`                            | Authenticate; returns token     |
+| POST      | `/api/logout`                           | Revoke current token            |
+| GET       | `/api/categories`                       | List categories                 |
+| POST      | `/api/categories`                       | Create category                 |
+| GET       | `/api/categories/{category}`            | Show category                   |
+| PUT       | `/api/categories/{category}`            | Update category                 |
+| POST      | `/api/categories/{category}/archive`    | Archive category                |
+| POST      | `/api/categories/{category}/reactivate` | Reactivate category             |
+| GET       | `/api/tickets`                          | List tickets (supports filters) |
+| POST      | `/api/tickets`                          | Create ticket                   |
+| GET       | `/api/tickets/{ticket}`                 | Show ticket                     |
+| PUT/PATCH | `/api/tickets/{ticket}`                 | Update ticket                   |
+| DELETE    | `/api/tickets/{ticket}`                 | Delete ticket                   |
+| POST      | `/api/tickets/{ticket}/assign`          | Assign ticket                   |
+| POST      | `/api/tickets/{ticket}/complete`        | Complete ticket                 |
+| POST      | `/api/tickets/{ticket}/approve`         | Approve ticket                  |
+| POST      | `/api/tickets/{ticket}/reject`          | Reject ticket                   |
+| GET       | `/api/tickets/{ticket}/comments`        | List comments                   |
+| POST      | `/api/tickets/{ticket}/comments`        | Create comment                  |
+| DELETE    | `/api/attachments/{attachment}`         | Delete attachment               |
+| GET       | `/api/users`                            | List users                      |
+| POST      | `/api/users`                            | Create user                     |
+| GET       | `/api/users/{user}`                     | Show user                       |
+| PUT/PATCH | `/api/users/{user}`                     | Update user                     |
+| DELETE    | `/api/users/{user}`                     | Delete user                     |
+| GET       | `/api/users/{user}/tickets`             | User’s tickets                  |
+| POST      | `/api/users/{user}/restore`             | Restore soft-deleted user       |
+
+For the exact list on your install:
+
+```bash
+php artisan route:list --path=api
+```
+
+## Testing
+
+```bash
+php artisan test
+```
+
+Feature tests cover HTTP endpoints, validation, authentication, and authorization.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

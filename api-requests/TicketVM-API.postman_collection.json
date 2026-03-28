@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "ticketvm-api-collection",
 		"name": "TicketVM API",
-		"description": "Complete API collection for TicketVM ticket management system. File attachments: Create/Update Ticket and Create Comment accept optional attachments (multipart/form-data). Attachment url in responses is a temporary signed URL (60 min) for direct download. Delete: DELETE /api/attachments/:id.",
+		"description": "Complete API collection for TicketVM ticket management system. Resource updates in this collection use HTTP POST with _method=PUT (Laravel method spoofing) so behavior matches the API’s PUT routes; raw PUT remains valid for JSON-only clients. File attachments: Create/Update Ticket and Create Comment accept optional attachments (multipart/form-data). For uploads use the field name attachments[] so the API receives an array (in Postman add multiple form rows with the same key for multiple files, max 5). Attachment url in responses depends on disk: S3 uses a temporary signed URL (~60 min); public disk (typical local dev) uses a regular public URL—run php artisan storage:link so /storage paths resolve. Delete attachments: DELETE /api/attachments/:id.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -230,7 +230,7 @@
 				{
 					"name": "Update Category",
 					"request": {
-						"method": "PUT",
+						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
@@ -250,7 +250,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Hardware (Updated)\",\n    \"description\": \"Updated description\",\n    \"color\": \"#10B981\"\n}",
+							"raw": "{\n    \"_method\": \"PUT\",\n    \"name\": \"Hardware (Updated)\",\n    \"description\": \"Updated description\",\n    \"color\": \"#10B981\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -275,7 +275,7 @@
 								}
 							]
 						},
-						"description": "Update a category. Admin only. Name must be unique."
+						"description": "Update a category. Use HTTP POST with JSON field _method=PUT (Laravel method spoofing) for consistency with other updates; the route is still PUT /api/categories/:id. Admin only. Name must be unique."
 					},
 					"response": []
 				},
@@ -532,10 +532,10 @@
 									"description": "Optional, admin/manager only"
 								},
 								{
-									"key": "attachments",
+									"key": "attachments[]",
 									"type": "file",
 									"src": [],
-									"description": "Optional. Max 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
+									"description": "Optional. Field name must be attachments[] (array, max 5 total). 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
 								}
 							]
 						},
@@ -549,7 +549,7 @@
 								"tickets"
 							]
 						},
-						"description": "Create a new ticket. Use multipart/form-data. Any authenticated user can create tickets. Managers/admins can optionally set agent_id during creation. Non-managers must specify manager_id. Optional attachments: max 5 files, 10MB each (jpeg, png, gif, pdf, doc, docx, txt)."
+						"description": "Create a new ticket. Use multipart/form-data. Any authenticated user can create tickets. Managers/admins can optionally set agent_id during creation. Non-managers must specify manager_id. For files use form field attachments[] (multiple rows with same key for multiple files). Optional attachments: max 5 files, 10MB each (jpeg, png, gif, pdf, doc, docx, txt)."
 					},
 					"response": []
 				},
@@ -594,7 +594,7 @@
 				{
 					"name": "Update Ticket",
 					"request": {
-						"method": "PUT",
+						"method": "POST",
 						"header": [
 							{
 								"key": "Accept",
@@ -610,6 +610,12 @@
 						"body": {
 							"mode": "formdata",
 							"formdata": [
+								{
+									"key": "_method",
+									"value": "PUT",
+									"type": "text",
+									"description": "Laravel method spoofing: use POST so multipart/form-data and file uploads are handled reliably."
+								},
 								{
 									"key": "title",
 									"value": "Updated ticket title",
@@ -651,10 +657,10 @@
 									"type": "text"
 								},
 								{
-									"key": "attachments",
+									"key": "attachments[]",
 									"type": "file",
 									"src": [],
-									"description": "Optional. Max 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
+									"description": "Optional. Field name must be attachments[] (array, max 5 total). 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
 								}
 							]
 						},
@@ -676,7 +682,7 @@
 								}
 							]
 						},
-						"description": "Update a ticket. Use multipart/form-data. All fields are optional. Status values: open, in_progress, pending_review, completed, rejected, cancelled. Optional attachments: max 5 files, 10MB each."
+						"description": "Update a ticket. Send HTTP POST with form field _method=PUT (Laravel method spoofing) so multipart/form-data and attachments[] behave reliably; the route is still PUT /api/tickets/:id. Use multipart/form-data. All fields are optional. Status values: open, in_progress, pending_review, completed, rejected, cancelled. For files use form field attachments[] (multiple rows with same key for multiple files). Optional attachments: max 5 files, 10MB each."
 					},
 					"response": []
 				},
@@ -975,15 +981,15 @@
 								},
 								{
 									"key": "is_internal",
-									"value": "false",
+									"value": "0",
 									"type": "text",
 									"description": "Optional, defaults to false"
 								},
 								{
-									"key": "attachments",
+									"key": "attachments[]",
 									"type": "file",
 									"src": [],
-									"description": "Optional. Max 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
+									"description": "Optional. Field name must be attachments[] (array, max 5 total). 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt"
 								}
 							]
 						},
@@ -1006,7 +1012,7 @@
 								}
 							]
 						},
-						"description": "Create a comment on a ticket. Use multipart/form-data. Only ticket manager, assigned agent, or admins can add comments. Body is required (max 255 characters). is_internal is optional (defaults to false). Optional attachments: max 5 files, 10MB each."
+						"description": "Create a comment on a ticket. Use multipart/form-data. Only ticket manager, assigned agent, or admins can add comments. Body is required (max 255 characters). is_internal is optional (defaults to false). For files use form field attachments[] (multiple rows with same key for multiple files). Optional attachments: max 5 files, 10MB each."
 					},
 					"response": []
 				},
@@ -1049,7 +1055,7 @@
 					"response": []
 				}
 			],
-			"description": "Ticket management endpoints. Attachments: Create/Update Ticket and Create Comment support optional file uploads. The attachment url in responses is a temporary signed URL (expires in 60 min) - use it immediately for download. No separate download route."
+			"description": "Ticket management endpoints. Attachments: Create/Update Ticket and Create Comment support optional file uploads; use multipart field name attachments[] for files (multiple Postman rows for multiple files). Attachment url in responses depends on disk: S3 uses a temporary signed URL (~60 min); public disk (typical local dev) uses a regular public URL—run php artisan storage:link. No separate download route."
 		},
 		{
 			"name": "Users",
@@ -1131,7 +1137,7 @@
 								"users"
 							]
 						},
-						"description": "Create a new user. Only admins and managers can create users. Role must be one of: admin, manager, agent."
+						"description": "Create a new user. Only admins and managers can create users. New users must be created with role agent only (promote to manager/admin via Update User)."
 					},
 					"response": []
 				},
@@ -1176,7 +1182,7 @@
 				{
 					"name": "Update User",
 					"request": {
-						"method": "PUT",
+						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
@@ -1196,7 +1202,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated@example.com\",\n    \"password\": \"newpassword123\",\n    \"role\": \"manager\"\n}",
+							"raw": "{\n    \"_method\": \"PUT\",\n    \"name\": \"Updated Name\",\n    \"email\": \"updated@example.com\",\n    \"password\": \"newpassword123\",\n    \"role\": \"manager\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1221,7 +1227,7 @@
 								}
 							]
 						},
-						"description": "Update a user. Only admins and managers can update users. All fields are optional (use 'sometimes' validation)."
+						"description": "Update a user. Use HTTP POST with JSON field _method=PUT (Laravel method spoofing) for consistency with other updates; the route is still PUT /api/users/:id. Only admins and managers can update users. All fields are optional (use 'sometimes' validation)."
 					},
 					"response": []
 				},
@@ -1260,6 +1266,45 @@
 							]
 						},
 						"description": "Delete a user. Only admins can delete users."
+					},
+					"response": []
+				},
+				{
+					"name": "Restore User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/:id/restore",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								":id",
+								"restore"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Soft-deleted user ID"
+								}
+							]
+						},
+						"description": "Restore a soft-deleted user. Admin only. Use the trashed user's id in the path (route resolves soft-deleted users). No request body."
 					},
 					"response": []
 				},
@@ -1305,7 +1350,7 @@
 								}
 							]
 						},
-						"description": "Get all tickets assigned to a specific user (as agent). Returns paginated results (15 per page). Includes category, manager, and agent relationships."
+						"description": "Get tickets for a specific user (paginated, 15 per page). If the user is a manager, returns tickets they manage; otherwise (e.g. agent) returns tickets assigned to them as agent. Includes category, manager, and agent relationships."
 					},
 					"response": []
 				}
