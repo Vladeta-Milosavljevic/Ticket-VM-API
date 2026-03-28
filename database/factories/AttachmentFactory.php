@@ -22,7 +22,7 @@ class AttachmentFactory extends Factory
      */
     public function definition(): array
     {
-        $ext = fake()->randomElement(['pdf', 'doc', 'docx', 'txt', 'png', 'jpeg', 'gif']);
+        $ext = \fake()->randomElement(['pdf', 'doc', 'docx', 'txt', 'png', 'jpeg', 'gif']);
         $mimeTypes = [
             'pdf' => 'application/pdf',
             'doc' => 'application/msword',
@@ -32,17 +32,17 @@ class AttachmentFactory extends Factory
             'jpeg' => 'image/jpeg',
             'gif' => 'image/gif',
         ];
-        $originalName = fake()->word().'.'.$ext;
+        $originalName = \fake()->word().'.'.$ext;
 
         return [
             'attachable_type' => Ticket::class,
             'attachable_id' => Ticket::factory(),
-            'filename' => fake()->slug().'.'.$ext,
+            'filename' => \fake()->slug().'.'.$ext,
             'original_name' => $originalName,
             'mime_type' => $mimeTypes[$ext],
-            'size' => fake()->numberBetween(1024, 5 * 1024 * 1024),
+            'size' => \fake()->numberBetween(1024, 5 * 1024 * 1024),
             'disk' => 'public',
-            'path' => 'attachments/tickets/1/'.fake()->uuid().'_'.$originalName,
+            'path' => 'attachments/tickets/1/'.\fake()->uuid().'_'.$originalName,
             'user_id' => User::factory(),
         ];
     }
@@ -55,7 +55,7 @@ class AttachmentFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'attachable_type' => Ticket::class,
             'attachable_id' => $ticket->id,
-            'path' => 'attachments/tickets/'.$ticket->id.'/'.fake()->uuid().'_'.($attributes['original_name'] ?? 'file.pdf'),
+            'path' => 'attachments/tickets/'.$ticket->id.'/'.\fake()->uuid().'_'.($attributes['original_name'] ?? 'file.pdf'),
         ]);
     }
 
@@ -67,7 +67,7 @@ class AttachmentFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'attachable_type' => Comment::class,
             'attachable_id' => $comment->id,
-            'path' => 'attachments/comments/'.$comment->id.'/'.fake()->uuid().'_'.($attributes['original_name'] ?? 'file.pdf'),
+            'path' => 'attachments/comments/'.$comment->id.'/'.\fake()->uuid().'_'.($attributes['original_name'] ?? 'file.pdf'),
         ]);
     }
 }

@@ -19,15 +19,15 @@ class TicketFactory extends Factory
      */
     public function definition(): array
     {
-        $urgency = fake()->randomElement(['low', 'medium', 'high', 'critical']);
-        $status = fake()->randomElement(['open', 'in_progress', 'pending_review', 'completed', 'rejected', 'cancelled']);
+        $urgency = \fake()->randomElement(['low', 'medium', 'high', 'critical']);
+        $status = \fake()->randomElement(['open', 'in_progress', 'pending_review', 'completed', 'rejected', 'cancelled']);
 
         // Deadlines: mix of past, near future, and far future
-        $deadline = fake()->dateTimeBetween('-1 week', '+2 months');
+        $deadline = \fake()->dateTimeBetween('-1 week', '+2 months');
 
         return [
-            'title' => fake()->sentence(4),
-            'description' => fake()->paragraph(3),
+            'title' => \fake()->sentence(4),
+            'description' => \fake()->paragraph(3),
             'urgency' => $urgency,
             'deadline' => $deadline,
             'status' => $status,
@@ -49,7 +49,7 @@ class TicketFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'agent_id' => User::factory()->agent(),
-                'status' => fake()->randomElement(['open', 'in_progress']),
+                'status' => \fake()->randomElement(['open', 'in_progress']),
             ];
         });
     }
@@ -63,7 +63,7 @@ class TicketFactory extends Factory
             return [
                 'agent_id' => User::factory()->agent(),
                 'status' => 'pending_review',
-                'completed_by_agent_at' => fake()->dateTimeBetween('-3 days', 'now'),
+                'completed_by_agent_at' => \fake()->dateTimeBetween('-3 days', 'now'),
             ];
         });
     }
@@ -74,13 +74,13 @@ class TicketFactory extends Factory
     public function completed(): static
     {
         return $this->state(function (array $attributes) {
-            $completedByAgentAt = fake()->dateTimeBetween('-1 week', '-2 days');
+            $completedByAgentAt = \fake()->dateTimeBetween('-1 week', '-2 days');
 
             return [
                 'agent_id' => User::factory()->agent(),
                 'status' => 'completed',
                 'completed_by_agent_at' => $completedByAgentAt,
-                'completed_by_manager_at' => fake()->dateTimeBetween($completedByAgentAt, 'now'),
+                'completed_by_manager_at' => \fake()->dateTimeBetween($completedByAgentAt, 'now'),
             ];
         });
     }
@@ -94,9 +94,9 @@ class TicketFactory extends Factory
             return [
                 'agent_id' => User::factory()->agent(),
                 'status' => 'rejected',
-                'completed_by_agent_at' => fake()->dateTimeBetween('-1 week', '-1 day'),
-                'rejected_at' => fake()->dateTimeBetween('-1 day', 'now'),
-                'rejection_reason' => fake()->sentence(),
+                'completed_by_agent_at' => \fake()->dateTimeBetween('-1 week', '-1 day'),
+                'rejected_at' => \fake()->dateTimeBetween('-1 day', 'now'),
+                'rejection_reason' => \fake()->sentence(),
             ];
         });
     }

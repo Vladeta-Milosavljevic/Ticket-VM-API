@@ -22,8 +22,8 @@ class CommentFactory extends Factory
         return [
             'ticket_id' => Ticket::factory(),
             'user_id' => User::factory(),
-            'body' => fake()->paragraph(2),
-            'is_internal' => fake()->boolean(20), // 20% chance of being internal
+            'body' => \fake()->paragraph(2),
+            'is_internal' => \fake()->boolean(20), // 20% chance of being internal
         ];
     }
 

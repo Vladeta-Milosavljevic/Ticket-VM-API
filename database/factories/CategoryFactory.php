@@ -17,13 +17,13 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->words(2, true);
+        $name = \fake()->unique()->words(2, true);
 
         return [
             'name' => ucwords($name),
             'slug' => Str::slug($name),
-            'description' => fake()->optional()->sentence(),
-            'color' => fake()->hexColor(),
+            'description' => \fake()->optional()->sentence(),
+            'color' => \fake()->hexColor(),
             'is_archived' => false,
         ];
     }
