@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->string('color')->nullable();
-            $table->boolean('is_archived')->default(false)->after('color');
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
         });
     }
