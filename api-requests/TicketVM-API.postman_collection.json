@@ -1359,16 +1359,7 @@
 		}
 	],
 	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://127.0.0.1:8000",
-			"type": "string"
-		},
-		{
-			"key": "app_url",
-			"value": "http://127.0.0.1:8000",
-			"type": "string"
-		},
+
 		{
 			"key": "bearer_token",
 			"value": "",
