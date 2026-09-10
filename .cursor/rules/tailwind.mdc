@@ -1,0 +1,18 @@
+---
+description: Tailwind CSS v4 for Laravel frontend assets
+globs: resources/css/**,resources/js/**,resources/views/**
+alwaysApply: false
+---
+
+# Tailwind CSS v4
+
+- Use Tailwind v4 syntax; do not use deprecated v3 utilities.
+- Import Tailwind with `@import "tailwindcss"` in CSS, not `@tailwind base/components/utilities`.
+- Configure theme in CSS with `@theme` when extending; avoid legacy `tailwind.config.js` unless the project already uses it.
+- Use `gap-*` for spacing in flex/grid layouts; support `dark:` when the app already uses dark mode.
+- Match existing Tailwind patterns in sibling files before inventing new class combinations.
+
+## Boundaries
+
+- Do not add Tailwind to projects that use plain CSS only (see `project.mdc` or SPA rules).
+- Tailwind rules apply to `resources/**` in Laravel apps, not necessarily to separate Vue SPA repos.

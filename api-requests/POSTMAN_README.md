@@ -351,7 +351,7 @@ Many endpoints have role-based authorization:
 -   **Ticket Assignment**: Only ticket manager or admins
 -   **Ticket Completion**: Only assigned agent or admins
 -   **Ticket Approval/Rejection**: Only ticket manager or admins
--   **Comments**: Only ticket manager, assigned agent, or admins
+-   **Comments (create)**: Only ticket manager, assigned agent, or admins. GET comments is open to any logged-in user.
 -   **User Creation**: Only admins and managers
 -   **User Deletion**: Only admins
 -   **Ticket Deletion**: Only admins and managers

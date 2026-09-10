@@ -950,7 +950,7 @@
 								}
 							]
 						},
-						"description": "Get comments for a specific ticket. Only ticket manager, assigned agent, or admins can view comments. Returns paginated results (15 per page)."
+						"description": "Get comments for a specific ticket. Any authenticated user can view comments. Returns paginated results (15 per page), latest first."
 					},
 					"response": []
 				},

@@ -1,0 +1,16 @@
+---
+description: 
+alwaysApply: true
+---
+
+# General
+
+- Prefer small, focused changes. Match existing patterns in the repo being edited.
+- Do not refactor unrelated code or add dependencies without approval.
+- Do not create documentation files unless explicitly requested.
+- Only create git commits or push when explicitly asked.
+- Ask when requirements are unclear.
+
+# Scoped rules
+
+Follow `laravel.mdc`, `vue.mdc`, `inertia.mdc`, and `tailwind.mdc` when globs match the files being edited.

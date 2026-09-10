@@ -1,0 +1,20 @@
+---
+description: Inertia.js with Vue 3
+globs: resources/js/**,app/Http/Middleware/HandleInertiaRequests.php,routes/web.php
+alwaysApply: false
+---
+
+# Inertia.js
+
+- Use `@inertiajs/vue3`: `Link`, `router.visit`, `useForm`, `Head` as appropriate.
+- Share global props in `HandleInertiaRequests` middleware; avoid prop drilling for auth, flash, and app config.
+- Controllers return `Inertia::render('Pages/...', [...])` with only the props the page needs.
+- Validate input with Form Requests before passing data to Inertia responses.
+- Prefer named routes with `route()` on the backend; use Ziggy or equivalent on the frontend when available.
+- Use lazy/deferred props for heavy data when supported.
+- Do not mix a separate SPA `axios` API layer into Inertia pages unless the project is explicitly hybrid (document in `project.mdc`).
+
+## Boundaries
+
+- Do not require Inertia in API-only Laravel repos without `inertiajs/inertia-laravel` installed.
+- Page navigation should use Inertia visits, not full page reloads, unless linking external URLs.

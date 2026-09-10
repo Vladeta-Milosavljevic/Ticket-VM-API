@@ -1,0 +1,29 @@
+---
+description: Laravel backend conventions (PHP)
+globs: app/**,bootstrap/**,config/**,database/**,routes/**,tests/**,lang/**
+alwaysApply: false
+---
+
+# Laravel
+
+- Use **Policies** for authorization (`$this->authorize()` in controllers). No inline 403 checks in controllers.
+- Use **Form Request** classes for validation; no `$request->validate()` in controllers.
+- Use **API Resources** for JSON API responses; do not return Eloquent models directly from controllers.
+- Eager-load relationships used in controllers and Resources to avoid N+1 queries.
+- Use Eloquent and relationships before raw queries; avoid `DB::` unless necessary.
+- Use `Log::` or `logger()` for logging; no `dd()`, `dump()`, or `var_dump()` in committed code.
+- Use `config()` in application code; do not use `env()` outside config files.
+
+## Testing and formatting
+
+- Every behavior change needs a **Pest** test (create or update). Run minimal tests: `php artisan test` with a file or `--filter`.
+- Run `vendor/bin/pint --dirty` on changed PHP files before finishing.
+
+## Documentation
+
+- Use Laravel Boost `search-docs` when Boost is installed, before guessing framework APIs.
+
+## Inertia vs API
+
+- If this app uses **Inertia**, return `Inertia::render()` from web controllers with validated props.
+- If this app is **API-only**, return JSON via API Resources; do not add Inertia or SPA code here.

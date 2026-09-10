@@ -1,0 +1,37 @@
+---
+description: 
+globs: resources/js/**/*.vue, resources/js/**/*.ts, resources/js/**/*.tsx
+alwaysApply: false
+---
+
+# Vue 3 + TypeScript
+
+> **Globs:** Default targets Laravel + Inertia (`resources/js/**`). For a standalone SPA, use `vue-spa.mdc` with `src/**` instead.
+
+- Use `<script setup lang="ts">` for new components.
+- Type props with `defineProps` / `withDefaults`; type emits with `defineEmits`.
+- Use `computed` for derived state; use stable `:key` values in `v-for` (ids, not index).
+- Do not mutate props; use emits or v-model toward the parent.
+- Put reusable logic in composables (`use*` in `resources/js/composables/` or project equivalent).
+- Put shared types in a `types/` directory; import with `import type`.
+- Avoid `any` and non-null assertions (`!`) unless unavoidable.
+- Show loading, empty, and error states for async data and form submits.
+
+## Inertia layout
+
+- Page components live under `resources/js/Pages/`.
+- Shared UI lives under `resources/js/Components/`.
+- Lazy-load heavy page components when appropriate.
+
+## Boundaries
+
+- Do not apply Laravel, Pest, or PHP tooling to Vue files.
+- Do not apply Inertia-specific rules (`inertia.mdc`) to non-Inertia SPAs unless this app uses Inertia.
+
+## Pinia
+
+- Use **setup stores** only: `defineStore('id', () => { ... })`.
+- Do not use the options API (`state`, `getters`, `actions` object form).
+- Use `ref` / `computed` for state and getters; plain functions for actions.
+- Return all state, getters, and actions from the setup function.
+- In components, use `storeToRefs()` when destructuring reactive state.

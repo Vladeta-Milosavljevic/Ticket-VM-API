@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Category;
+use App\Models\Comment;
 use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
@@ -113,6 +114,18 @@ test('authenticated user can view a ticket', function () {
     $response->assertStatus(200)
         ->assertJsonPath('data.id', $ticket->id)
         ->assertJsonPath('data.title', $ticket->title);
+});
+
+test('ticket show returns 15 comments and comments count', function () {
+    authenticateAs();
+    $ticket = Ticket::factory()->create();
+    Comment::factory()->count(16)->for($ticket)->create();
+
+    $response = $this->getJson("/api/tickets/{$ticket->id}");
+
+    $response->assertOk()
+        ->assertJsonPath('data.comments_count', 16)
+        ->assertJsonCount(15, 'data.comments');
 });
 
 test('authenticated user can create ticket with manager_id', function () {
@@ -532,4 +545,19 @@ test('unassigned agent cannot add comment', function () {
     ]);
 
     $response->assertStatus(403);
+});
+
+test('unassigned agent can list comments', function () {
+    $manager = User::factory()->manager()->create();
+    $assignedAgent = User::factory()->agent()->create();
+    $otherAgent = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create([
+        'manager_id' => $manager->id,
+        'agent_id' => $assignedAgent->id,
+    ]);
+    authenticateAs($otherAgent);
+
+    $response = $this->getJson("/api/tickets/{$ticket->id}/comments");
+
+    $response->assertOk();
 });

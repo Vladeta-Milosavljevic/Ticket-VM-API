@@ -83,12 +83,13 @@ class TicketPolicy
 
     /**
      * Determine whether the user can view comments on the ticket.
+     *
+     * Listing comments is open to any authenticated user (same as view).
+     * Posting comments stays on createComment.
      */
     public function viewComments(User $user, Ticket $ticket): bool
     {
-        return $user->isAdmin()
-            || $ticket->manager_id === $user->id
-            || $ticket->agent_id === $user->id;
+        return true;
     }
 
     /**

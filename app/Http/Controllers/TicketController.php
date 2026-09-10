@@ -29,7 +29,8 @@ use Illuminate\Support\Str;
  * 4. Manager approves/rejects (via approve/reject endpoints)
  *
  * Authorization Rules:
- * - Comments: Only ticket manager, assigned agent, or admins
+ * - View comments: Any authenticated user
+ * - Create comments: Only ticket manager, assigned agent, or admins
  * - Assignment: Only ticket manager or admins
  * - Completion: Only assigned agent or admins
  * - Approval/Rejection: Only ticket manager or admins
@@ -62,15 +63,27 @@ class TicketController extends Controller
     }
 
     /**
-     * Display the specified ticket with all related data.
+     * Display the specified ticket with related data.
      *
      * Eager loads:
-     * - category, manager, agent
-     * - comments with their authors (nested relationship)
+     * - category, manager, agent, attachments
+     * - latest 15 comments with user and attachments
+     *
+     * Also loads comments_count. Does not load all comments.
      */
     public function show(Ticket $ticket): TicketResource
     {
-        $ticket->load(['category', 'manager', 'agent', 'comments.user', 'comments.attachments', 'attachments']);
+        $ticket->load([
+            'category',
+            'manager',
+            'agent',
+            'attachments',
+            'comments' => fn ($query) => $query
+                ->with(['user', 'attachments'])
+                ->latest()
+                ->limit(15),
+        ]);
+        $ticket->loadCount('comments');
 
         return new TicketResource($ticket);
     }
@@ -391,11 +404,11 @@ class TicketController extends Controller
     /**
      * Get comments for a specific ticket.
      *
-     * Authorization: Only ticket manager, assigned agent, or admins can view comments.
-     * This ensures private conversations remain between relevant parties.
+     * Authorization: Any authenticated user can list comments.
+     * Unauthenticated requests are rejected by auth:sanctum (401).
      *
-     * Comments are paginated and ordered by latest first.
-     * Eager loads user relationship to prevent N+1 queries.
+     * Comments are paginated (15 per page) and ordered by latest first.
+     * Eager loads user and attachments to prevent N+1 queries.
      */
     public function comments(Request $request, Ticket $ticket): AnonymousResourceCollection|JsonResponse
     {

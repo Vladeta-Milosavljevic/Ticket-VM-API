@@ -1,6 +1,9 @@
 ---
-alwaysApply: true
+description: 
+globs: app/**, bootstrap/**, config/**, database/**, routes/**, tests/**, lang/**
+alwaysApply: false
 ---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
@@ -104,14 +107,22 @@ protected function isAccessible(User $user, ?string $path = null): bool
 </code-snippet>
 
 ## Comments
-- Prefer PHPDoc blocks over comments. Never use comments within the code itself unless there is something _very_ complex going on.
+
+When writing or changing PHP in this repo, add explanatory comments **by default**
+so intent, workflow, and side effects are clear without guessing.
+
+- **Class docblock** when the class has a clear role, workflow, or authorization rules
+  (see `TicketController`).
+- **PHPDoc on public methods**: purpose, auth, business rules, eager loads, side effects.
+- **Inline `//` comments** before non-obvious steps: status transitions, auto-assignment,
+  audit logging, guards, N+1 prevention.
+- Skip comments that only restate what names and types already say.
+- When editing, comment **new or changed** code only; do not mass-comment unrelated methods.
+
+Follow the global User Rules **Comments** policy; this section adds PHP-specific detail.
 
 ## PHPDoc Blocks
 - Add useful array shape type definitions for arrays when appropriate.
-
-## Enums
-- Typically, keys in an Enum should be TitleCase. For example: `FavoritePerson`, `BestLake`, `Monthly`.
-
 
 === tests rules ===
 
@@ -303,7 +314,7 @@ it('has emails', function (string $email) {
 - Opacity values are still numeric.
 
 | Deprecated |	Replacement |
-|------------+--------------|
+|---+-----|
 | bg-opacity-* | bg-black/* |
 | text-opacity-* | text-black/* |
 | border-opacity-* | border-black/* |

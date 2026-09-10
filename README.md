@@ -38,8 +38,8 @@ Users have one of: **`admin`**, **`manager`**, **`agent`**. Access to actions is
 
 ### Comments
 
-- `GET /api/tickets/{ticket}/comments` — list comments.
-- `POST /api/tickets/{ticket}/comments` — add a comment.
+- `GET /api/tickets/{ticket}/comments` — list comments (any authenticated user).
+- `POST /api/tickets/{ticket}/comments` — add a comment (ticket manager, assigned agent, or admin).
 - Optional **is_internal** flag on comments (stored and returned in the API for clients or future visibility rules).
 
 ### Attachments

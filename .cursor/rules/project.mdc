@@ -1,0 +1,12 @@
+---
+description: ticketvmapi project boundaries
+globs: app/**,routes/**,tests/**
+alwaysApply: false
+---
+
+# ticketvmapi
+
+- This repo is the **JSON API backend** (Laravel 12, Sanctum). The Vue SPA lives in the sibling repo **`ticketvm`**.
+- **Inertia is not installed** in this repo. Do not add Inertia pages, `HandleInertiaRequests`, or `@inertiajs/vue3` here until the package is added.
+- Use Laravel Boost MCP (`search-docs`, `tinker`, etc.) for this codebase.
+- Tailwind applies only to default Laravel Vite assets under `resources/` (welcome page), not to `ticketvm`.
