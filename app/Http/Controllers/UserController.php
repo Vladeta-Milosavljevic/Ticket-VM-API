@@ -119,7 +119,7 @@ class UserController extends Controller
         $this->authorize('viewTickets', $user);
 
         $tickets = ($user->isManager() ? $user->managerTickets() : $user->tickets())
-            ->with(['category', 'manager', 'agent'])
+            ->with(['category', 'manager', 'agent', 'requester'])
             ->latest()
             ->paginate(15);
 

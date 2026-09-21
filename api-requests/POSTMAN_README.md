@@ -177,6 +177,8 @@ Use **multipart/form-data** for Create Ticket (supports optional file attachment
 -   `agent_id` (optional, only admins/managers can set): Integer, must exist in users table
 -   `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
 
+`requester` / `requester_id` is set server-side to the authenticated user. Do not send `requester_id`; it is ignored if present.
+
 ### Update Ticket
 
 Use **multipart/form-data** for Update Ticket (supports optional file attachments). Send **HTTP POST** with form field **`_method=PUT`** so uploads are handled correctly; the route remains **`PUT /api/tickets/{id}`**.

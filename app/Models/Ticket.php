@@ -40,6 +40,7 @@ class Ticket extends Model
         'category_id',
         'manager_id',
         'agent_id',
+        'requester_id',
         'completed_by_agent_at',
         'completed_by_manager_at',
         'rejected_at',
@@ -74,6 +75,11 @@ class Ticket extends Model
     public function agent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'agent_id')->withTrashed();
+    }
+
+    public function requester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'requester_id')->withTrashed();
     }
 
     public function comments(): HasMany

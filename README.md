@@ -35,6 +35,7 @@ Users have one of: **`admin`**, **`manager`**, **`agent`**. Access to actions is
 - **Status** (for updates and filters): `open`, `in_progress`, `pending_review`, `completed`, `rejected`, `cancelled`.
 - **Urgency**: `low`, `medium`, `high`, `critical`.
 - Optional: `deadline`, `category_id`, `manager_id`, `agent_id`, plus completion and rejection timestamps/reason where applicable.
+- **Requester**: set server-side on create to the authenticated user (`requester` in responses). Clients cannot set or change `requester_id`.
 
 ### Comments
 

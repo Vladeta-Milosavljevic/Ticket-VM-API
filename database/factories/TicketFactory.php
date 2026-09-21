@@ -34,6 +34,7 @@ class TicketFactory extends Factory
             'category_id' => Category::factory(),
             'manager_id' => User::factory(),
             'agent_id' => null,
+            'requester_id' => User::factory(),
             'completed_by_agent_at' => null,
             'completed_by_manager_at' => null,
             'rejected_at' => null,

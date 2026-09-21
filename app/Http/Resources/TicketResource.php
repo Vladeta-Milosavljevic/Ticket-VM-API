@@ -18,6 +18,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property \App\Models\Comment[]|null $comments
  * @property \App\Models\User|null $manager
  * @property \App\Models\User|null $agent
+ * @property \App\Models\User|null $requester
  * @property \Illuminate\Support\Carbon|null $completed_by_agent_at
  * @property \Illuminate\Support\Carbon|null $completed_by_manager_at
  * @property \Illuminate\Support\Carbon|null $rejected_at
@@ -49,6 +50,7 @@ class TicketResource extends JsonResource
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'manager' => new UserResource($this->whenLoaded('manager')),
             'agent' => new UserResource($this->whenLoaded('agent')),
+            'requester' => new UserResource($this->whenLoaded('requester')),
             'completed_by_agent_at' => $this->completed_by_agent_at?->format('Y-m-d H:i:s'),
             'completed_by_manager_at' => $this->completed_by_manager_at?->format('Y-m-d H:i:s'),
             'rejected_at' => $this->rejected_at?->format('Y-m-d H:i:s'),

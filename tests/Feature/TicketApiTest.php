@@ -130,7 +130,7 @@ test('ticket show returns 15 comments and comments count', function () {
 
 test('authenticated user can create ticket with manager_id', function () {
     $category = Category::factory()->create(['is_archived' => false]);
-    authenticateAs(User::factory()->agent()->create());
+    $agent = authenticateAs(User::factory()->agent()->create());
     $manager = User::factory()->manager()->create();
 
     $response = $this->postJson('/api/tickets', [
@@ -143,9 +143,13 @@ test('authenticated user can create ticket with manager_id', function () {
     ]);
 
     $response->assertStatus(201)
-        ->assertJsonPath('data.title', 'New Ticket');
+        ->assertJsonPath('data.title', 'New Ticket')
+        ->assertJsonPath('data.requester.id', $agent->id);
 
-    $this->assertDatabaseHas('tickets', ['title' => 'New Ticket']);
+    $this->assertDatabaseHas('tickets', [
+        'title' => 'New Ticket',
+        'requester_id' => $agent->id,
+    ]);
 });
 
 test('manager can create ticket without manager_id (auto-assigned)', function () {
@@ -161,7 +165,49 @@ test('manager can create ticket without manager_id (auto-assigned)', function ()
     ]);
 
     $response->assertStatus(201)
-        ->assertJsonPath('data.manager.id', $manager->id);
+        ->assertJsonPath('data.manager.id', $manager->id)
+        ->assertJsonPath('data.requester.id', $manager->id);
+});
+
+test('create ticket ignores client-supplied requester_id', function () {
+    $category = Category::factory()->create(['is_archived' => false]);
+    $agent = authenticateAs(User::factory()->agent()->create());
+    $manager = User::factory()->manager()->create();
+    $otherUser = User::factory()->agent()->create();
+
+    $response = $this->postJson('/api/tickets', [
+        'title' => 'Spoof Requester Ticket',
+        'description' => 'Should keep auth user as requester',
+        'urgency' => 'medium',
+        'deadline' => Carbon::tomorrow()->addDay()->format('Y-m-d H:i:s'),
+        'category_id' => $category->id,
+        'manager_id' => $manager->id,
+        'requester_id' => $otherUser->id,
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('data.requester.id', $agent->id);
+
+    $this->assertDatabaseHas('tickets', [
+        'title' => 'Spoof Requester Ticket',
+        'requester_id' => $agent->id,
+    ]);
+    $this->assertDatabaseMissing('tickets', [
+        'title' => 'Spoof Requester Ticket',
+        'requester_id' => $otherUser->id,
+    ]);
+});
+
+test('ticket show includes requester when present', function () {
+    authenticateAs();
+    $requester = User::factory()->agent()->create();
+    $ticket = Ticket::factory()->create(['requester_id' => $requester->id]);
+
+    $response = $this->getJson("/api/tickets/{$ticket->id}");
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.requester.id', $requester->id)
+        ->assertJsonPath('data.requester.name', $requester->name);
 });
 
 test('ticket manager can update ticket', function () {
@@ -263,6 +309,28 @@ test('admin can delete ticket', function () {
 
     $response->assertStatus(200);
     $this->assertDatabaseMissing('tickets', ['id' => $ticket->id]);
+});
+
+test('assigned manager can delete ticket', function () {
+    $manager = User::factory()->manager()->create();
+    authenticateAs($manager);
+    $ticket = Ticket::factory()->create(['manager_id' => $manager->id]);
+
+    $response = $this->deleteJson("/api/tickets/{$ticket->id}");
+
+    $response->assertStatus(200);
+    $this->assertDatabaseMissing('tickets', ['id' => $ticket->id]);
+});
+
+test('non assigned manager cannot delete ticket', function () {
+    $manager = User::factory()->manager()->create();
+    $otherManager = User::factory()->manager()->create();
+    authenticateAs($manager);
+    $ticket = Ticket::factory()->create(['manager_id' => $otherManager->id]);
+
+    $response = $this->deleteJson("/api/tickets/{$ticket->id}");
+    $response->assertStatus(403);
+    $this->assertDatabaseHas('tickets', ['id' => $ticket->id]);
 });
 
 test('agent cannot delete ticket', function () {

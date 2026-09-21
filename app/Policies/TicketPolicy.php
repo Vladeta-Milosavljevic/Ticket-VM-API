@@ -46,7 +46,7 @@ class TicketPolicy
      */
     public function delete(User $user, Ticket $ticket): bool
     {
-        return $user->isAdmin() || $user->isManager();
+        return $user->isAdmin() || $ticket->manager_id === $user->id;
     }
 
     /**

@@ -45,7 +45,7 @@ class TicketController extends Controller
      * Supports sorting via sort and order parameters.
      *
      * Eager loads relationships to prevent N+1 queries:
-     * - category, manager, agent
+     * - category, manager, agent, requester
      */
     public function index(IndexTicketRequest $request): AnonymousResourceCollection
     {
@@ -53,7 +53,7 @@ class TicketController extends Controller
         $sort = $validated['sort'] ?? 'created_at';
         $order = $validated['order'] ?? 'desc';
 
-        $tickets = Ticket::with(['category', 'manager', 'agent'])
+        $tickets = Ticket::with(['category', 'manager', 'agent', 'requester'])
             ->filter($validated)
             ->orderBy($sort, $order)
             ->paginate(15)
@@ -66,7 +66,7 @@ class TicketController extends Controller
      * Display the specified ticket with related data.
      *
      * Eager loads:
-     * - category, manager, agent, attachments
+     * - category, manager, agent, requester, attachments
      * - latest 15 comments with user and attachments
      *
      * Also loads comments_count. Does not load all comments.
@@ -77,6 +77,7 @@ class TicketController extends Controller
             'category',
             'manager',
             'agent',
+            'requester',
             'attachments',
             'comments' => fn ($query) => $query
                 ->with(['user', 'attachments'])
@@ -98,6 +99,7 @@ class TicketController extends Controller
      * - Non-managers: manager_id required (must specify a manager)
      * - Only admins/managers can set agent_id during creation
      * - Others must use the assign endpoint to assign agents
+     * - requester_id is always the authenticated user (not client-writable)
      */
     public function store(StoreTicketRequest $request): TicketResource
     {
@@ -113,6 +115,10 @@ class TicketController extends Controller
         if (! $request->user()->isAdmin() && ! $request->user()->isManager()) {
             unset($ticketData['agent_id']);
         }
+
+        // Always record the authenticated user as the ticket requester
+        $ticketData['requester_id'] = $request->user()->id;
+
         $ticket = Ticket::create($ticketData);
 
         if ($request->hasFile('attachments')) {
@@ -127,11 +133,12 @@ class TicketController extends Controller
             'ticket_title' => $ticket->title,
             'manager_id' => $ticket->manager_id,
             'agent_id' => $ticket->agent_id,
+            'requester_id' => $ticket->requester_id,
             'urgency' => $ticket->urgency,
             'status' => $ticket->status,
         ]);
 
-        return new TicketResource($ticket->load(['category', 'manager', 'agent', 'attachments']));
+        return new TicketResource($ticket->load(['category', 'manager', 'agent', 'requester', 'attachments']));
     }
 
     /**
