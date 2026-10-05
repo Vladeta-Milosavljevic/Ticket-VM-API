@@ -4,14 +4,14 @@ This document provides instructions for using the TicketVM API Postman collectio
 
 ## 📋 Table of Contents
 
--   [Importing the Collection](#importing-the-collection)
--   [Configuration](#configuration)
--   [Authentication](#authentication)
--   [Endpoints Overview](#endpoints-overview)
--   [Request Examples](#request-examples)
--   [Response Formats](#response-formats)
--   [Error Handling](#error-handling)
--   [Workflow Guide](#workflow-guide)
+- [Importing the Collection](#importing-the-collection)
+- [Configuration](#configuration)
+- [Authentication](#authentication)
+- [Endpoints Overview](#endpoints-overview)
+- [Request Examples](#request-examples)
+- [Response Formats](#response-formats)
+- [Error Handling](#error-handling)
+- [Workflow Guide](#workflow-guide)
 
 ## 📥 Importing the Collection
 
@@ -32,10 +32,10 @@ The collection will appear with folders for each resource. The two **environment
 
 Use Postman’s **environment** dropdown (top right) to pick which base URL applies:
 
-| Environment            | `base_url` value |
-| ---------------------- | ---------------- |
-| **TicketVM - Local**   | `http://127.0.0.1:8000` (or use your Herd URL if different) |
-| **TicketVM - Production** | `https://ticket-vm-api-main-narkga.free.laravel.cloud` |
+| Environment               | `base_url` value                                            |
+| ------------------------- | ----------------------------------------------------------- |
+| **TicketVM - Local**      | `http://127.0.0.1:8000` (or use your Herd URL if different) |
+| **TicketVM - Production** | `https://ticket-vm-api-main-narkga.laravel.cloud`           |
 
 When an environment is active, its variables **override** the collection’s default `base_url`. If you import the collection only and select **No Environment**, defaults stay at `http://127.0.0.1:8000` (safer than pointing at production by mistake).
 
@@ -45,9 +45,9 @@ When an environment is active, its variables **override** the collection’s def
 
 The collection uses:
 
--   `{{base_url}}` — API host (scheme + host, **no** trailing slash). Default on the collection: `http://127.0.0.1:8000`.
--   `{{app_url}}` — Same host as `base_url` in the bundled environments (reserved for consistency with collection variables).
--   `{{bearer_token}}` — Automatically populated after **Login** (stores the authentication token).
+- `{{base_url}}` — API host (scheme + host, **no** trailing slash). Default on the collection: `http://127.0.0.1:8000`.
+- `{{app_url}}` — Same host as `base_url` in the bundled environments (reserved for consistency with collection variables).
+- `{{bearer_token}}` — Automatically populated after **Login** (stores the authentication token).
 
 **Note:** All API endpoints include `/api` in the path (e.g., `{{base_url}}/api/login`).
 
@@ -70,10 +70,10 @@ This API uses **bearer token authentication** via Laravel Sanctum. The authentic
 
 ### Important Notes
 
--   **Automatic Token Management**: The collection includes a test script on the Login request that automatically saves the bearer token to the collection variable. You don't need to manually copy/paste tokens.
--   **Token Persistence**: The token persists in the collection variable for your Postman session until you logout or close Postman.
--   **Authorization Header**: All authenticated requests automatically include `Authorization: Bearer {{bearer_token}}` header.
--   **Token Revocation**: Calling the Logout endpoint revokes the current token on the server, making it invalid for future requests.
+- **Automatic Token Management**: The collection includes a test script on the Login request that automatically saves the bearer token to the collection variable. You don't need to manually copy/paste tokens.
+- **Token Persistence**: The token persists in the collection variable for your Postman session until you logout or close Postman.
+- **Authorization Header**: All authenticated requests automatically include `Authorization: Bearer {{bearer_token}}` header.
+- **Token Revocation**: Calling the Logout endpoint revokes the current token on the server, making it invalid for future requests.
 
 ### Authentication Examples
 
@@ -133,32 +133,32 @@ The API defines updates as **`PUT`** routes. This Postman collection uses **HTTP
 
 ### Authentication
 
--   `POST /api/login` - Authenticate user and receive bearer token
--   `POST /api/logout` - Logout user and revoke bearer token
+- `POST /api/login` - Authenticate user and receive bearer token
+- `POST /api/logout` - Logout user and revoke bearer token
 
 ### Tickets
 
--   `GET /api/tickets` - List all tickets (paginated)
--   `POST /api/tickets` - Create a new ticket
--   `GET /api/tickets/{id}` - Get a specific ticket
--   `PUT /api/tickets/{id}` - Update a ticket (collection uses `POST` + `_method=PUT`; see [Updates (Postman collection)](#updates-postman-collection))
--   `DELETE /api/tickets/{id}` - Delete a ticket
--   `POST /api/tickets/{id}/assign` - Assign an agent to a ticket
--   `POST /api/tickets/{id}/complete` - Mark ticket as completed
--   `POST /api/tickets/{id}/approve` - Approve ticket completion
--   `POST /api/tickets/{id}/reject` - Reject ticket completion
--   `GET /api/tickets/{id}/comments` - Get ticket comments
--   `POST /api/tickets/{id}/comments` - Add a comment to a ticket
+- `GET /api/tickets` - List all tickets (paginated)
+- `POST /api/tickets` - Create a new ticket
+- `GET /api/tickets/{id}` - Get a specific ticket
+- `PUT /api/tickets/{id}` - Update a ticket (collection uses `POST` + `_method=PUT`; see [Updates (Postman collection)](#updates-postman-collection))
+- `DELETE /api/tickets/{id}` - Delete a ticket
+- `POST /api/tickets/{id}/assign` - Assign an agent to a ticket
+- `POST /api/tickets/{id}/complete` - Mark ticket as completed
+- `POST /api/tickets/{id}/approve` - Approve ticket completion
+- `POST /api/tickets/{id}/reject` - Reject ticket completion
+- `GET /api/tickets/{id}/comments` - Get ticket comments
+- `POST /api/tickets/{id}/comments` - Add a comment to a ticket
 
 ### Users
 
--   `GET /api/users` - List all users (paginated)
--   `POST /api/users` - Create a new user
--   `GET /api/users/{id}` - Get a specific user
--   `PUT /api/users/{id}` - Update a user (collection uses `POST` + JSON `_method`; see [Updates (Postman collection)](#updates-postman-collection))
--   `DELETE /api/users/{id}` - Delete a user (soft delete)
--   `POST /api/users/{id}/restore` - Restore a soft-deleted user (admin only)
--   `GET /api/users/{id}/tickets` - Get tickets for a user: if the user is a **manager**, tickets they **manage**; otherwise (e.g. **agent**), tickets **assigned** to them as agent
+- `GET /api/users` - List all users (paginated)
+- `POST /api/users` - Create a new user
+- `GET /api/users/{id}` - Get a specific user
+- `PUT /api/users/{id}` - Update a user (collection uses `POST` + JSON `_method`; see [Updates (Postman collection)](#updates-postman-collection))
+- `DELETE /api/users/{id}` - Delete a user (soft delete)
+- `POST /api/users/{id}/restore` - Restore a soft-deleted user (admin only)
+- `GET /api/users/{id}/tickets` - Get tickets for a user: if the user is a **manager**, tickets they **manage**; otherwise (e.g. **agent**), tickets **assigned** to them as agent
 
 ## 📝 Request Examples
 
@@ -168,14 +168,14 @@ Use **multipart/form-data** for Create Ticket (supports optional file attachment
 
 **Field Requirements:**
 
--   `title` (required): String, max 255 characters
--   `description` (required): String
--   `urgency` (required): One of `low`, `medium`, `high`, `critical`
--   `deadline` (required): ISO 8601 date, must be in the future
--   `category_id` (optional): Integer, must exist in categories table
--   `manager_id` (required for non-managers, optional for managers/admins): Integer, must exist in users table
--   `agent_id` (optional, only admins/managers can set): Integer, must exist in users table
--   `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
+- `title` (required): String, max 255 characters
+- `description` (required): String
+- `urgency` (required): One of `low`, `medium`, `high`, `critical`
+- `deadline` (required): ISO 8601 date, must be in the future
+- `category_id` (optional): Integer, must exist in categories table
+- `manager_id` (required for non-managers, optional for managers/admins): Integer, must exist in users table
+- `agent_id` (optional, only admins/managers can set): Integer, must exist in users table
+- `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
 
 `requester` / `requester_id` is set server-side to the authenticated user. Do not send `requester_id`; it is ignored if present.
 
@@ -187,12 +187,12 @@ All fields are optional. Only include fields you want to update. Optional `attac
 
 **Status Values:**
 
--   `open` - Ticket is open
--   `in_progress` - Work is in progress
--   `pending_review` - Awaiting manager approval
--   `completed` - Ticket is completed
--   `rejected` - Completion was rejected
--   `cancelled` - Ticket was cancelled
+- `open` - Ticket is open
+- `in_progress` - Work is in progress
+- `pending_review` - Awaiting manager approval
+- `completed` - Ticket is completed
+- `rejected` - Completion was rejected
+- `cancelled` - Ticket was cancelled
 
 ### Assign Agent
 
@@ -230,10 +230,10 @@ POST /api/tickets/1/reject
 
 Use **multipart/form-data** for Create Comment (supports optional file attachments).
 
--   `body` (required): String, max 255 characters
--   `is_internal` (optional): Boolean, defaults to false
--   `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
--   `is_internal` (optional): Boolean, defaults to `false`
+- `body` (required): String, max 255 characters
+- `is_internal` (optional): Boolean, defaults to false
+- `attachments` (optional): Up to 5 files, 10MB each. Allowed: jpeg, png, gif, pdf, doc, docx, txt
+- `is_internal` (optional): Boolean, defaults to `false`
 
 ### Create User
 
@@ -249,9 +249,9 @@ POST /api/users
 
 **Role Values:**
 
--   `admin` - Full access
--   `manager` - Can manage tickets and users
--   `agent` - Can work on assigned tickets
+- `admin` - Full access
+- `manager` - Can manage tickets and users
+- `agent` - Can work on assigned tickets
 
 **Authorization:** Only admins and managers can create users.
 
@@ -265,9 +265,9 @@ DELETE /api/attachments/:id
 
 ### File Attachments
 
--   **Create Ticket**, **Update Ticket**, and **Create Comment** accept optional `attachments` (multipart/form-data).
--   Max 5 files per request, 10MB each. Allowed types: jpeg, png, gif, pdf, doc, docx, txt.
--   The `url` field in attachment responses depends on storage: **S3** returns a **temporary signed URL** (~60 minutes). The **public** disk (typical local dev) returns a regular public URL—run `php artisan storage:link` so `/storage` paths resolve. There is no separate download route.
+- **Create Ticket**, **Update Ticket**, and **Create Comment** accept optional `attachments` (multipart/form-data).
+- Max 5 files per request, 10MB each. Allowed types: jpeg, png, gif, pdf, doc, docx, txt.
+- The `url` field in attachment responses depends on storage: **S3** returns a **temporary signed URL** (~60 minutes). The **public** disk (typical local dev) returns a regular public URL—run `php artisan storage:link` so `/storage` paths resolve. There is no separate download route.
 
 ## 📦 Response Formats
 
@@ -337,48 +337,44 @@ Validation errors:
 
 ### Common HTTP Status Codes
 
--   `200 OK` - Request successful
--   `201 Created` - Resource created successfully
--   `400 Bad Request` - Validation error or invalid request
--   `401 Unauthorized` - Authentication required or invalid credentials
--   `403 Forbidden` - Insufficient permissions
--   `404 Not Found` - Resource not found
--   `422 Unprocessable Entity` - Validation failed
--   `500 Internal Server Error` - Server error
+- `200 OK` - Request successful
+- `201 Created` - Resource created successfully
+- `400 Bad Request` - Validation error or invalid request
+- `401 Unauthorized` - Authentication required or invalid credentials
+- `403 Forbidden` - Insufficient permissions
+- `404 Not Found` - Resource not found
+- `422 Unprocessable Entity` - Validation failed
+- `500 Internal Server Error` - Server error
 
 ### Authorization Errors
 
 Many endpoints have role-based authorization:
 
--   **Ticket Assignment**: Only ticket manager or admins
--   **Ticket Completion**: Only assigned agent or admins
--   **Ticket Approval/Rejection**: Only ticket manager or admins
--   **Comments (create)**: Only ticket manager, assigned agent, or admins. GET comments is open to any logged-in user.
--   **User Creation**: Only admins and managers
--   **User Deletion**: Only admins
--   **Ticket Deletion**: Only admins. Managers stop work by setting status to `cancelled` instead of deleting.
+- **Ticket Assignment**: Only ticket manager or admins
+- **Ticket Completion**: Only assigned agent or admins
+- **Ticket Approval/Rejection**: Only ticket manager or admins
+- **Comments (create)**: Only ticket manager, assigned agent, or admins. GET comments is open to any logged-in user.
+- **User Creation**: Only admins and managers
+- **User Deletion**: Only admins
+- **Ticket Deletion**: Only admins. Managers stop work by setting status to `cancelled` instead of deleting.
 
 ## 🔄 Workflow Guide
 
 ### Complete Ticket Workflow
 
 1. **Create Ticket** (`POST /api/tickets`)
-
     - Any authenticated user can create tickets
     - Managers/admins can optionally assign agent during creation
 
 2. **Assign Agent** (`POST /api/tickets/{id}/assign`)
-
     - Manager or admin assigns an agent to work on the ticket
     - Required before agent can complete the ticket
 
 3. **Work on Ticket**
-
     - Agent can update ticket details (`PUT /api/tickets/{id}`; Postman collection: `POST` + `_method=PUT`)
     - Agent can add comments (`POST /api/tickets/{id}/comments`)
 
 4. **Complete Ticket** (`POST /api/tickets/{id}/complete`)
-
     - Agent marks ticket as complete
     - Status changes to `pending_review`
 
@@ -411,33 +407,33 @@ Many endpoints have role-based authorization:
 
 ## 🔍 Testing Checklist
 
--   [ ] Login with valid credentials
--   [ ] Verify bearer token is automatically saved to collection variable
--   [ ] Login with invalid credentials (should fail)
--   [ ] Access protected endpoint without bearer token (should fail with 401)
--   [ ] Access protected endpoint with invalid token (should fail with 401)
--   [ ] Create ticket with all required fields
--   [ ] Create ticket with missing required fields (should fail)
--   [ ] Update ticket with valid data
--   [ ] Assign agent to ticket
--   [ ] Complete ticket as assigned agent
--   [ ] Approve ticket as manager
--   [ ] Reject ticket as manager
--   [ ] Add comment to ticket
--   [ ] View ticket comments
--   [ ] Create user as admin/manager
--   [ ] Create user as agent (should fail)
--   [ ] Delete user as admin
--   [ ] Delete user as non-admin (should fail)
--   [ ] Logout successfully
+- [ ] Login with valid credentials
+- [ ] Verify bearer token is automatically saved to collection variable
+- [ ] Login with invalid credentials (should fail)
+- [ ] Access protected endpoint without bearer token (should fail with 401)
+- [ ] Access protected endpoint with invalid token (should fail with 401)
+- [ ] Create ticket with all required fields
+- [ ] Create ticket with missing required fields (should fail)
+- [ ] Update ticket with valid data
+- [ ] Assign agent to ticket
+- [ ] Complete ticket as assigned agent
+- [ ] Approve ticket as manager
+- [ ] Reject ticket as manager
+- [ ] Add comment to ticket
+- [ ] View ticket comments
+- [ ] Create user as admin/manager
+- [ ] Create user as agent (should fail)
+- [ ] Delete user as admin
+- [ ] Delete user as non-admin (should fail)
+- [ ] Logout successfully
 
 ## 📞 Support
 
 For issues or questions:
 
--   Check Laravel logs: `storage/logs/laravel.log`
--   Review API documentation in code comments
--   Check validation rules in Form Request classes
+- Check Laravel logs: `storage/logs/laravel.log`
+- Review API documentation in code comments
+- Check validation rules in Form Request classes
 
 ---
 
