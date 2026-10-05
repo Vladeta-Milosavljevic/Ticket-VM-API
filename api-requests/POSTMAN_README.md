@@ -356,7 +356,7 @@ Many endpoints have role-based authorization:
 -   **Comments (create)**: Only ticket manager, assigned agent, or admins. GET comments is open to any logged-in user.
 -   **User Creation**: Only admins and managers
 -   **User Deletion**: Only admins
--   **Ticket Deletion**: Only admins and managers
+-   **Ticket Deletion**: Only admins. Managers stop work by setting status to `cancelled` instead of deleting.
 
 ## 🔄 Workflow Guide
 

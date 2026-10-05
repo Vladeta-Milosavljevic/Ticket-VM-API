@@ -43,10 +43,12 @@ class TicketPolicy
 
     /**
      * Determine whether the user can delete the ticket.
+     *
+     * Only admins can delete a ticket.
      */
     public function delete(User $user, Ticket $ticket): bool
     {
-        return $user->isAdmin() || $ticket->manager_id === $user->id;
+        return $user->isAdmin();
     }
 
     /**

@@ -720,7 +720,7 @@
 								}
 							]
 						},
-						"description": "Delete a ticket. Only admins and managers can delete tickets."
+						"description": "Delete a ticket. Only admins can delete tickets. Managers stop work by setting status to cancelled instead of deleting."
 					},
 					"response": []
 				},

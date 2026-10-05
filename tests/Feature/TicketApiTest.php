@@ -311,15 +311,15 @@ test('admin can delete ticket', function () {
     $this->assertDatabaseMissing('tickets', ['id' => $ticket->id]);
 });
 
-test('assigned manager can delete ticket', function () {
+test('assigned manager cannot delete ticket', function () {
     $manager = User::factory()->manager()->create();
     authenticateAs($manager);
     $ticket = Ticket::factory()->create(['manager_id' => $manager->id]);
 
     $response = $this->deleteJson("/api/tickets/{$ticket->id}");
 
-    $response->assertStatus(200);
-    $this->assertDatabaseMissing('tickets', ['id' => $ticket->id]);
+    $response->assertStatus(403);
+    $this->assertDatabaseHas('tickets', ['id' => $ticket->id]);
 });
 
 test('non assigned manager cannot delete ticket', function () {

@@ -204,7 +204,7 @@ class TicketController extends Controller
     /**
      * Delete the specified ticket.
      *
-     * Authorization: Only admins and managers can delete tickets.
+     * Authorization: Only admins can delete tickets.
      */
     public function destroy(Request $request, Ticket $ticket): JsonResponse
     {
